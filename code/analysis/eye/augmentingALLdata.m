@@ -17,15 +17,19 @@ data.elfix      = nan(1,length(data.posx));
 data.elfixini   = nan(1,length(data.posx));
 data.elfixend   = nan(1,length(data.posx));
 data.DToTarg    = nan(1,length(data.posx));
+data.xToTarg    = nan(1,length(data.posx));
+data.yToTarg    = nan(1,length(data.posx));
+data.tToTarg    = nan(1,length(data.posx));
 data.onTarg     = zeros(1,length(data.posx));
 data.nextToTarg = nan(3,length(data.posx));
-
+tic
 for ev = 1:length(data.posx)
    
     % where in the array is each fixation
     if ~isnan(data.posx(ev))
         ixH         = find(data.posx(ev)>posVec.hLims,1,'last');
         ixV         = find(data.posy(ev)>posVec.vLims,1,'last');
+        tFixTarg    = data.start(find(data.trial == data.trial(ev) & data.subject == data.subject(ev) & data.type==1,1,'last'));
         if ~isempty(ixH) && ~isempty(ixV) 
             if ixH>0 && ixH<9 && ixV>0 && ixV<7
                 data.elfix(ev) = sub2ind([6 8],ixV,ixH);
@@ -45,7 +49,9 @@ for ev = 1:length(data.posx)
         end
         data.DToTarg(ev) = sqrt((data.posx(ev)-posVec.scr(1,data.tpos(ev))).^2+... % euclidian distance
             (data.posy(ev)-posVec.scr(2,data.tpos(ev))).^2);
-        
+        data.xToTarg(ev) = posVec.scr(1,data.tpos(ev))-data.posx(ev);
+        data.yToTarg(ev) = posVec.scr(2,data.tpos(ev))-data.posy(ev);
+        data.tToTarg(ev) = data.start(ev)-tFixTarg;
     end
     
     % where in the array is each saccade
@@ -65,7 +71,7 @@ for ev = 1:length(data.posx)
     end
     
 end
-       
+toc
 %%
 % add performance, repeated and revisited fixation
 load(fullfile(pathexp,'analysis','eyedata','allRT.mat'))
@@ -78,6 +84,7 @@ data.refix     = zeros(1,length(data.posx));
 data.revisit   = zeros(1,length(data.posx));
 data.torevisit = zeros(1,length(data.posx));
 data.torefix   = zeros(1,length(data.posx));
+tic
 for ss = unique(data.subject)
     ss
     for tt = unique(data.trial(data.subject==ss))
@@ -98,7 +105,7 @@ for ss = unique(data.subject)
                    if any(revisits)
                         if ~(sum(revisits)==1 && revisits(end)==1 && data.elfix(auxindx(ft)) == data.elfix(auxindx(ft-1))) % to avoid clasifying a fix as revisit when there has been thre refix in a row
                             data.revisit(auxindx(ft)) = ft-lag;
-                            data.torevisit(auxindx(lag)) = 1;
+                            data.torevisit(auxindx(lag)) = ft-lag;
                         end
                    end
                end
@@ -106,6 +113,7 @@ for ss = unique(data.subject)
         end
     end
 end
+toc
 save(fullfile(pathexp,'analysis','eyedata','alleyedataFULL.mat'),'data')
 %%
 % Get the relevant info into subjects eyedata files
@@ -129,6 +137,9 @@ for tk = unique(data.subject); % subject number
     eyedata.events.orderPreT    = data.orderPreT(data.subject==tk);
     eyedata.events.refix        = data.refix(data.subject==tk);
     eyedata.events.revisit      = data.revisit(data.subject==tk);
+    eyedata.events.xToTarg      = data.xToTarg(data.subject==tk);
+    eyedata.events.yToTarg      = data.yToTarg(data.subject==tk);
+    eyedata.events.tToTarg      = data.tToTarg(data.subject==tk);
     save([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'],'eyedata')
 end
 %%

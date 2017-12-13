@@ -113,56 +113,56 @@ end
 %     fh = newtplot(allFix.(['fix',num2str(ft)]).ERP,...
 %                  ERPall.(p.analysis_type{1}).time,50,Y'/1000,p.colorlim,'ERPvsFix')
 % end
+
+%grand average
+clear
+E283_params
+at                  = 1;
+p.analysis_type     = {'ICAem'}; 
+cfgr                = [];
+s=1
+for tk = [6 7 11 12 15 19 22 20 21 23 26 27 28 29 31]; % subject number
+    if ismac    
+        cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','fixLock','expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
+    else
+        cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','fixLock');
+    end
+    load([cfg_eeg.analysisfolder cfg_eeg.analysisname '/ERPs/' cfg_eeg.sujid '_fixTL'],'ERP','p')
+    % fix
+    ERPall(s) = ERP;
+    s=s+1;
+end
+
+fERP    = fields(ERPall);
+for ff=1:length(fERP)
+    str_GA = 'GA.(fERP{ff}) = ft_timelockgrandaverage([]';
+    for ss = 1:length(ERPall)
+        str_GA = [str_GA, ',ERPall(' num2str(ss) ').' fERP{ff} '.' p.analysis_type{1} ''];
+    end
+    str_GA = [str_GA,');'];
+    eval(str_GA);
+end
 %%
-% grand average
-% clear
-% E283_params
-% at                  = 1;
-% p.analysis_type     = {'ICAem'}; 
-% cfgr                = [];
-% s=1
-% for tk = [6 7 11 12 15 19 22 20 21 23 26 27 28 29 31]; % subject number
-%     if ismac    
-%         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','fixLock','expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
-%     else
-%         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','fixLock');
-%     end
-%     load([cfg_eeg.analysisfolder cfg_eeg.analysisname '/ERPs/' cfg_eeg.sujid '_fixTL'],'ERP','p')
-%     % fix
-%     ERPall(s) = ERP;
-%     s=s+1;
-% end
-% 
-% fERP    = fields(ERPall);
-% for ff=1:length(fERP)
-%     str_GA = 'GA.(fERP{ff}) = ft_timelockgrandaverage([]';
-%     for ss = 1:length(ERPall)
-%         str_GA = [str_GA, ',ERPall(' num2str(ss) ').' fERP{ff} '.' p.analysis_type{1} ''];
-%     end
-%     str_GA = [str_GA,');'];
-%     eval(str_GA);
-% end
-% %%
-% % GA FIGURE
-% fERP    = fields(GA);
-%  p.interval      = [-.2 .64 .02];
-% p.colorlim  = [-6 6];
-%   p.bsl           = [-.25 -0];
-% for ff=1:length(fERP)
-% 
-%     fh            = plot_topos(cfg_eeg,GA.(fERP{ff}),p.interval,p.bsl,p.colorlim,['all ' fERP{ff}  ' / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-%     doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'tiff',['all_' fERP{ff}],1)
-% % saveas(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/all_imlock_' p.analysis_type{1} '_' fERP{ff}],'fig')
-% % close(fh)
-% end
-% 
-% 
-% %%
-% load(cfg_eeg.chanfile)
-% cfgp                = [];
-% cfgp.showlabels     = 'no'; 
-% cfgp.fontsize       = 12; 
-% cfgp.elec           = elec;
-% cfgp.interactive    = 'yes';
-% % cfgp.clim      = [-.6 .6];
-% figure,ft_multiplotER(cfgp,GA.nore,GA.fix0,GA.fix1,GA.fix2,GA.fix3,GA.fix4,GA.fix5)
+% GA FIGURE
+fERP    = fields(GA);
+ p.interval      = [-.2 .64 .02];
+p.colorlim  = [-6 6];
+  p.bsl           = [-.25 -0];
+for ff=1:length(fERP)
+
+    fh            = plot_topos(cfg_eeg,GA.(fERP{ff}),p.interval,p.bsl,p.colorlim,['all ' fERP{ff}  ' / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
+    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'tiff',['all_' fERP{ff}],1)
+% saveas(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/all_imlock_' p.analysis_type{1} '_' fERP{ff}],'fig')
+% close(fh)
+end
+
+
+%%
+load(cfg_eeg.chanfile)
+cfgp                = [];
+cfgp.showlabels     = 'no'; 
+cfgp.fontsize       = 12; 
+cfgp.elec           = elec;
+cfgp.interactive    = 'yes';
+% cfgp.clim      = [-.6 .6];
+figure,ft_multiplotER(cfgp,GA.nore,GA.fix0,GA.fix1,GA.fix2,GA.prerevisit2)

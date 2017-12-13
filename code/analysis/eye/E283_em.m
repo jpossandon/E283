@@ -124,7 +124,58 @@ colormap(cmap)
 
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
              'tiff','RTperPos',1)        
-        
+
+%%
+% figure reaction time per distance to the target
+lgscale = 0;
+ixfix   = find(data.start>0 & data.type==1 & data.tToTarg<-100 & data.tToTarg>-10000);
+ixfix   = ixfix(1:5:end);
+figure,hold on
+cmap    = flipud(cmocean('thermal'));
+for ff = ixfix
+%     ff
+if lgscale
+    plot(data.xToTarg(ff),data.yToTarg(ff),'.','Color',cmap(round((log10(-data.tToTarg(ff)/1000)+1)/2*256),:),'MarkerSize',4)
+else
+    plot(data.xToTarg(ff),data.yToTarg(ff),'.','Color',cmap(round(-data.tToTarg(ff)/10100*256),:),'MarkerSize',4)
+end
+ end
+axis([-1250 1250 -750 750])
+vline(0,':k')
+hline(0,':k')
+if lgscale
+    hc = colorbar('colormap',cmap,'XTick',(log10([.1:.1:.9,1:10])+1)/2,'XTickLabel',[.1:.1:.9,1:10]);
+    doimage(gcf,fullfile(pathexp,'figures','behaviour'),'tiff','RTdistTlog',1)  
+else
+    hc = colorbar('colormap',cmap,'XTick',0:.1:1,'XTickLabel',[0:1:10]);
+        doimage(gcf,fullfile(pathexp,'figures','behaviour'),'tiff','RTdistT',1)  
+end   
+
+%%
+% as a surface
+clear Z
+ixfix   = find(data.start>0 & data.type==1 & data.tToTarg<-100 & data.tToTarg>-10000);
+xxpos = data.xToTarg(ixfix);
+yypos = data.yToTarg(ixfix);
+tt    = data.tToTarg(ixfix);
+xlin = linspace(-1250,1250,30);
+ylin = linspace(-750,750,30);
+for xx = 1:length(xlin)-1
+    for yy = 1:length(ylin)-1
+        auxix = find(xxpos>xlin(xx) & xxpos<xlin(xx+1) & yypos>ylin(yy) & yypos<ylin(yy+1));
+        Z(xx,yy) = median(-tt(auxix)/1000);
+    end
+end
+% [X,Y] = meshgrid(xlin(1:end-1)+diff(xlin)/2,ylin(1:end-1)+diff(ylin)/2);
+% figure,surf(X,Y,Z)
+figure,
+imagesc(xlin(1:end-1)+diff(xlin)/2,ylin(1:end-1)+diff(ylin)/2,log10(Z),[-1 1])
+   hc = colorbar('colormap',cmap,'XTick',log10([.1:.1:.9,1:10]),'XTickLabel',[.1:.1:.9,1:10]);
+  
+colormap(cmap)
+% f = scatteredInterpolant(data.xToTarg(ixfix)',data.yToTarg(ixfix)',log10(-data.tToTarg(ixfix)'/1000));
+% Z = f(X,Y)
+ 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % FIXATION DURATIONS, REFIXATIONS AND REVISITS
@@ -140,7 +191,7 @@ for ss = subjects
     SUMMARY.refixpTr(s) =sum(auxdat.refix & ~lastfix)./length(unique(auxdat.trial));
     SUMMARY.revisitpTr(s) =sum(auxdat.revisit>0 & ~lastfix)./length(unique(auxdat.trial));
     
-     SUMMARY.newpTr(s) =sum(~auxdat.refix & ~lastfix & auxdat.start>0 & auxdat.revisit==0)./length(unique(auxdat.trial));
+    SUMMARY.newpTr(s) =sum(~auxdat.refix & ~lastfix & auxdat.start>0 & auxdat.revisit==0)./length(unique(auxdat.trial));
    
     onlyrefix                           =  find(auxdat.refix & ~lastfix &auxdat.type==1);           % only refixation that are njot hte last fixation
     preonlyrefix                        =  find(auxdat.torefix & ~auxdat.refix);                                        % the fixation previous to that
@@ -157,7 +208,7 @@ for ss = subjects
     
     SUMMARY.revisitfixMdur(s)           = mean(auxdat.dur(revisit));
     SUMMARY.revisitfixMdur(s)           = mean(auxdat.dur(prerevisit));
-    SUMMARY.torevisitfixMdur(s)         = mean(auxdat.dur(auxdat.torevisit==1));
+    SUMMARY.torevisitfixMdur(s)         = mean(auxdat.dur(auxdat.torevisit>0));
     auxprerevisit                       = zeros(1,length(auxdat.dur));
     auxprerevisit(prerevisit)           = 1;
     SUMMARY.fixdurnoreMdur(s)           = mean(auxdat.dur(~auxdat.torefix & ...
@@ -168,9 +219,11 @@ for ss = subjects
     for lag = 2:5
        SUMMARY.revisitpLagMdur(s,lag-1)    = mean(auxdat.dur(auxdat.revisit == lag & ~lastfix & auxdat.type==1));
        SUMMARY.prerevisitpLagMdur(s,lag-1) = mean(auxdat.dur(prerevisit(prerevisitLag== lag)));
+       SUMMARY.torevisitpLagMdur(s,lag-1) = mean(auxdat.dur(auxdat.torevisit == lag  & auxdat.type==1));
     end
        SUMMARY.revisitpLagMdur(s,lag)    = mean(auxdat.dur(auxdat.revisit > lag & ~lastfix & auxdat.type==1));
        SUMMARY.prerevisitpLagMdur(s,lag) = mean(auxdat.dur(prerevisit(prerevisitLag > lag)));
+       SUMMARY.torevisitpLagMdur(s,lag) = mean(auxdat.dur(auxdat.torevisit > lag  & auxdat.type==1));
     
     % ditances refix to element                                    
     SUMMARY.preonlyrefixMdist(s)        = mean(sqrt((auxdat.posx(preonlyrefix)-posVec.scr(1,auxdat.elfix(preonlyrefix))).^2 + ...
@@ -315,13 +368,22 @@ for ll = 1:5
     errorbar(ll+6,mean(SUMMARY.prerevisitpLagMdur(:,ll)),std(SUMMARY.prerevisitpLagMdur(:,ll))./sqrt(Ns),'LineWidth',2,'Color',[0 0 0])
     plot(ll+6,mean(SUMMARY.prerevisitpLagMdur(:,ll)),'sk','MarkerSize',12,'LineWidth',1,'MarkerFaceColor',[1 0 0])
   
+    plot(ll+12+jitter,SUMMARY.torevisitpLagMdur(:,ll),'ok','MarkerSize',8,'LineWidth',1,'MarkerFaceColor',[.7 .7 .7])
+    errorbar(ll+12,mean(SUMMARY.torevisitpLagMdur(:,ll)),std(SUMMARY.torevisitpLagMdur(:,ll))./sqrt(Ns),'LineWidth',2,'Color',[0 0 0])
+    plot(ll+12,mean(SUMMARY.torevisitpLagMdur(:,ll)),'sk','MarkerSize',12,'LineWidth',1,'MarkerFaceColor',[1 0 0])
+  
 end
 
-axis([0 12 0 300])
-set(gca,'FontSize',10,'XTick',[1:5,7:11],'XTickLabel',{'2','3','4','5','>6','2','3','4','5','>6'})
+plot(ll+14+jitter,SUMMARY.fixdurnoreMdur,'ok','MarkerSize',8,'LineWidth',1,'MarkerFaceColor',[.7 .7 .7])
+    errorbar(ll+14,mean(SUMMARY.fixdurnoreMdur),std(SUMMARY.fixdurnoreMdur)./sqrt(Ns),'LineWidth',2,'Color',[0 0 0])
+    plot(ll+14,mean(SUMMARY.fixdurnoreMdur),'sk','MarkerSize',12,'LineWidth',1,'MarkerFaceColor',[1 0 0])
+  hline(mean(SUMMARY.fixdurnoreMdur))
+
+axis([0 20 0 300])
+set(gca,'FontSize',10,'XTick',[1:5,7:11,13:17,19],'XTickLabel',{'2','3','4','5','>6','2','3','4','5','>6','2','3','4','5','>6','nore'})
 ylabel('Fixation duration (ms)','FontSize',12)
-xlabel('Duration revisit at lag                                     Duration pre-revisit at lag')
+xlabel('Duration revisit at lag          Duration pre-revisit at lag         Duration to-revisit at lag')
 tightfig
- doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-             'tiff','fixdursrevisit',1)
+  doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
+               'tiff','fixdursrevisit',1)
 
