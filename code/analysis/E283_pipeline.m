@@ -3,9 +3,9 @@
 %%
 % Read the eyetracker file
 clear
-oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31];
+oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31,41:47,50,51,52,53,55,56];
      
-addsubjects             = [];
+addsubjects             = [5];
 % eeg                     = [0,0,1,1];
 for s=addsubjects
     eegfilename     = sprintf('s%02dvs',s);
@@ -14,7 +14,7 @@ for s=addsubjects
     if ismac    
         cfg             = eeg_etParams_E283('sujid',suj,'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
     else
-        cfg             = eeg_etParams_E283('sujid',suj);
+        cfg             = eeg_etParams_E283('sujid',suj,'expfolder','C:\Users\jpo\trabajo\E283\');
     end
     cfg             = eeg_etParams_E283(cfg,'sujid',suj,...%'expfolder','/net/store/nbp/projects/EEG/E275/',...      % to run things in different environments
                                     'task_id','fv_touch',...

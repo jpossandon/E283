@@ -1,14 +1,14 @@
 %clean_path
 %%
 %suj = str2num(getenv('SGE_TASK_ID'));
-for suj             = [28,29,31];
+for suj             = [44:47,50,51,52,53,55,56];
 eegfilename     = sprintf('s%02dvs',suj);
 suj             = sprintf('s%02dvs',suj);
 
 if ismac    
     cfg             = eeg_etParams_E283('sujid',suj,'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
 else
-    cfg             = eeg_etParams_E283('sujid',suj);
+      cfg             = eeg_etParams_E283('sujid',suj,'expfolder','C:\Users\jpo\trabajo\E283\');
 end
     
 %%
@@ -82,7 +82,7 @@ clear cfg
 if ismac    
     cfg             = eeg_etParams_E283('sujid',suj,'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
 else
-    cfg             = eeg_etParams_E283('sujid',suj);
+   cfg             = eeg_etParams_E283('sujid',suj,'expfolder','C:\Users\jpo\trabajo\E283\');
 end
 
 cfg             = eeg_etParams_E283(cfg,...
@@ -157,7 +157,7 @@ clear cfg
 if ismac    
     cfg             = eeg_etParams_E283('sujid',suj,'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
 else
-    cfg             = eeg_etParams_E283('sujid',suj);
+   cfg             = eeg_etParams_E283('sujid',suj,'expfolder','C:\Users\jpo\trabajo\E283\');
 end
 
 cfg             = eeg_etParams_E283(cfg,...
