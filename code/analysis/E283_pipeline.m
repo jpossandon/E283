@@ -5,7 +5,7 @@
 clear
 oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31,41:47,50,51,52,53,55,56];
      
-addsubjects             = [5];
+addsubjects             = [57,58,59];
 % eeg                     = [0,0,1,1];
 for s=addsubjects
     eegfilename     = sprintf('s%02dvs',s);
