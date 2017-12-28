@@ -1,13 +1,81 @@
 %%
-% Adds symbol and target information to alleyedata structure 
-%
+%%
+% create the file with all rT data
 clear
 pathexp = '/Users/jossando/trabajo/E283/';
+% create the file with all rT data
 load(fullfile(pathexp,'analysis','eyedata','alleyedata.mat'))
 load(fullfile(pathexp,'analysis','eyedata','tgtPos.mat'))
+data    = struct_elim(data,data.subject<6,2,1);
+subject = unique(data.subject);
 
-% remove subject with a different search array
-data = struct_elim(data,data.subject<6,2,1);
+path = '/Users/jossando/trabajo/E283/data/';
+path2 = '/Volumes/nibaldo/trabajo/E283/data/';
+for s = subject
+    mkdir(sprintf('%ss%02dvs',path,s))
+    copyfile(sprintf('%ss%02dvs/s%02dvs.mat',path2,s,s),sprintf('%ss%02dvs/s%02dvs.mat',path,s,s))
+    load(sprintf('%ss%02dvs/s%02dvs.mat',path,s,s))
+    win.result.subject = s.*ones(1,length(win.result.rT));
+    win.result.value   = zeros(1,length(win.result.rT));
+    win.result.value(stim.trial(stim.subject==s)) = stim.value(stim.subject==s);
+    win.result.cue     = zeros(1,length(win.result.rT));
+    win.result.cue(win.result.value>0 & win.result.value<7) = 1; % informative
+    win.result.cue(win.result.value>7) = 2; % uninformative
+    result = struct_up('result',win.result,2);
+end
+save('/Users/jossando/trabajo/E283/analysis/eyedata/allRT','result')
+
+subj    = unique(result.subject); % which subject do we have
+aux20   = find(result.subject==20);
+result  =  struct_elim(result,aux20(1:26),2,0);
+aux22   = find(result.subject==22);
+result  =  struct_elim(result,aux22(1:7),2,0);
+    
+result.tpos     = zeros(1,length(result.rT));
+result.trial    = zeros(1,length(result.rT));
+for s = 1:length(subj)
+    auxindx     = find(data.subject==subj(s));
+    auxindxres  = find(result.subject==subj(s));
+    auxindstim  = find(stim.subject==subj(s));
+    if ~isequal(sum(result.subject==subj(s)),length(unique(data.trial(auxindx))))
+        error('No same amount of trial')
+    end
+    
+    auxtops     = [];
+    auxtrial    = [];
+    auxtimestim = [];
+
+    nn=1;
+    auxpos  = data.tpos(auxindx);
+    auxtime = stim.time(auxindstim);
+    
+    for nt = min(data.trial(auxindx)):max(data.trial(auxindx))
+        auxt    = find(data.trial(auxindx)==nt);
+        auxr    = unique(auxpos(auxt));
+        if length(auxr)>1
+            error('no single tpos value')
+        end
+        auxtops(nn)  = auxr;
+        auxtrial(nn) = nt;
+        
+        auxt    = find(stim.trial(auxindstim)==nt);
+        if ~isempty(auxt)
+            auxtt   = unique(auxtime(auxt));
+            if length(auxtt)>1
+                error('no single time value')
+            end
+            auxtimestim(nn) = auxtt;
+        else
+            auxtimestim(nn) = NaN;
+        end
+        nn =nn+1;
+    end
+    
+    result.tpos(auxindxres)     = auxtops;
+    result.trial(auxindxres)    = auxtrial;
+    result.stimtime(auxindxres) = auxtimestim;
+end
+save('/Users/jossando/trabajo/E283/analysis/eyedata/allRT','result')
 
 %%
 % assign to each fixation an element and to every saccade an starting and

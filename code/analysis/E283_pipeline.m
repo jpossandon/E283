@@ -3,16 +3,17 @@
 %%
 % Read the eyetracker file
 clear
-oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31,41:47,50,51,52,53,55,56];
+MACpath = '/Volumes/nibaldo/trabajo/E283/';
+oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31,41:47,50,51,52,53,55,56,57,58,59];
      
-addsubjects             = [57,58,59];
+addsubjects             = [54];
 % eeg                     = [0,0,1,1];
 for s=addsubjects
     eegfilename     = sprintf('s%02dvs',s);
     suj             = sprintf('s%02dvs',s);
 
     if ismac    
-        cfg             = eeg_etParams_E283('sujid',suj,'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
+        cfg             = eeg_etParams_E283('sujid',suj,'expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
     else
         cfg             = eeg_etParams_E283('sujid',suj,'expfolder','C:\Users\jpo\trabajo\E283\');
     end

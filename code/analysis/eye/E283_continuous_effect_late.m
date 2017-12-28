@@ -15,7 +15,8 @@ eyedata.events.angle    = data.angle*pi/180;
 subjects                = unique(eyedata.events.subject);
 
 %%
-subjects            = [2,4,5,6,7,10,11,12,13,14,15];
+E283_params
+subjects            = p.subj;
 horres              = 1920;
 dt                  = 1500;                        % length of analysis in seconds;
 et_sr               = 500;                         % sampling rate eye-tracker
@@ -45,10 +46,10 @@ for s = 1:length(subjects)
     % control values, we take them for trials without stimulation after
     % image apearance (~ half trials) at the same time that stimulation
     % ocurred in the other trials
-    nostimtrl           = setdiff(17:max(stim.trial(stim.subject==subjects(s))),tr);
-    val                 = [val,zeros(1,rnval)];
-    tr                  = [tr,randsample(nostimtrl,rnval,'true')];
-    t                   = [t,randsample(t,rnval)];
+%     nostimtrl           = setdiff(17:max(stim.trial(stim.subject==subjects(s))),tr);
+%     val                 = [val,zeros(1,rnval)];
+%     tr                  = [tr,randsample(nostimtrl,rnval,'true')];
+%     t                   = [t,randsample(t,rnval)];
         
     nreprog =1;                 % counter to separate trials in which the first saccade after stimulation ocurred after earlylatlimit
     for n = 1:length(t)
@@ -112,16 +113,20 @@ for s = 1:length(subjects)
             
         % the next lines generete the dummy coding for
         % left,right,bilateral, against cros-nostim
-        XY(n,1) = crossaux;  % crossing
-        XY(n,2) = infoaux;  % cue informativens
-        
-        
-        if ismember(val(n),[1,5,9,13])
-            XY(n,3) = 1;
-        elseif ismember(val(n),[2,6,10,14])
-            XY(n,4) = 1;
-        end
-        XY(n,10) = fix_pre_posx;
+        % this does not work whene tere is stimulation always
+%         if any(val==0)
+%             XY(n,1) = crossaux;  % crossing
+%             XY(n,2) = infoaux;  % cue informativens
+% 
+% 
+%             if ismember(val(n),[1,5,9,13])
+%                 XY(n,3) = 1;
+%             elseif ismember(val(n),[2,6,10,14])
+%                 XY(n,4) = 1;
+%             end
+%             XY(n,10) = fix_pre_posx;
+%         end
+
 %         if ~isempty(indxsac)          % data only for trials with saccades after stimulation and that occurred after earlylatlimit
 %             if auxlat>earlylatlimit(1) & auxlat<earlylatlimit(2) 
 %                 datac_reprog(s).(conds{cross==crossaux & stimside==val(n)})(nreprog,:)   = auxdata(n,1,1:499);   
@@ -157,17 +162,19 @@ for s = 1:length(subjects)
             XY_eff(n,8)     = fix_pre_posx;
         end
     end
-        
-    for st=1:length(conds)
-        datac(s).(conds{st})            = nanmean(datac(s).(conds{st}));
+       
+    condsF = fields(datac);
+    for st=1:length(condsF)
+        datac(s).(condsF{st})            = nanmean(datac(s).(condsF{st}));
 %         datac_reprog(s).(conds{st})     = nanmean(datac_reprog(s).(conds{st}));
     end
-    XY(:,5) = XY(:,1).*XY(:,2);
-    XY(:,6) = XY(:,1).*XY(:,3);
-    XY(:,7) = XY(:,1).*XY(:,4);
-    XY(:,8) = XY(:,2).*XY(:,3);
-    XY(:,9) = XY(:,2).*XY(:,4);
-    
+    %         if any(val==0)
+%     XY(:,5) = XY(:,1).*XY(:,2);
+%     XY(:,6) = XY(:,1).*XY(:,3);
+%     XY(:,7) = XY(:,1).*XY(:,4);
+%     XY(:,8) = XY(:,2).*XY(:,3);
+%     XY(:,9) = XY(:,2).*XY(:,4);
+% end
     XY_eff(:,4) = XY_eff(:,1).*XY_eff(:,2);
     XY_eff(:,5) = XY_eff(:,1).*XY_eff(:,3);
     XY_eff(:,6) = XY_eff(:,2).*XY_eff(:,3);
@@ -176,12 +183,13 @@ for s = 1:length(subjects)
 %     XY_reprog(:,5) = XY_reprog(:,1).*XY_reprog(:,3);
 %  
     elec.channeighbstructmat = 0;
-    [datac(s).B,datac(s).Bt,datac(s).STATS,datac(s).T] = regntcfe(auxdata,XY,1,'dummy',elec,0);
+%     [datac(s).B,datac(s).Bt,datac(s).STATS,datac(s).T] = regntcfe(auxdata,XY,1,'dummy',elec,0);
     [datac_eff(s).B,datac_eff(s).Bt,datac_eff(s).STATS,datac_eff(s).T] = regntcfe(auxdata(1:rnval,:,:),XY_eff,1,'effect',elec,0);
     
 %     [datac_reprog(s).B,datac_reprog(s).Bt,datac_reprog(s).STATS,datac_reprog(s).T] = regntcfe(auxdata_reprog,XY_reprog,1,'dummy',elec,0);
     clear XY auxdata XY_reprog auxdata_reprog XY_eff
-    save([path 'analysis/model_late'],'datac','datac_eff','saclat','fixlat','fixelap','subjects')
+%     save([path 'analysis/model_late'],'datac','datac_eff','saclat','fixlat','fixelap','subjects')
+     save([path 'analysis/model_late'],'datac_eff','saclat','fixlat','fixelap','subjects')
 end
 
 %%
@@ -194,7 +202,7 @@ figure,
 hold on
 for e = 1:size(allb,1)/nsuj
 % plot(allb(e:numb:end,:)','Color',cmap(e,:))
-h(e) = plot(mean(allb(e:numb:end,:))','Color',cmap(e,:),'LineWidt',3);
+   h(e) = plot(mean(allb(e:numb:end,:))','Color',cmap(e,:),'LineWidt',3);
 end
 legend(h,{'constant','Cross','Info','LR','CrossxInfo','CrossxLR','InfoxLR','CrossxInfoxLR','Covariate'})
 set(gca,'XTick',0:250:750,'XTickLabel',[0:250:750]/500,'FontSize',14)
