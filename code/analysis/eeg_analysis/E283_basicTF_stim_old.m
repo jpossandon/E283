@@ -14,7 +14,7 @@ for tk = p.subj; % subject number
     % Analysis parameters
     p.times_tflock              = [500 1000];
     p.analysis_type             = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
-    p.bsl                       = [-.5 -.25]; 
+    p.bsl                       = [-.350 -.150]; 
     p.reref                     = 'yes';
     p.keep                      = 'yes';
     p.collim                    = [0 2];
@@ -28,9 +28,9 @@ for tk = p.subj; % subject number
     % p.cfgTFR.t_ftimwin          = .512*ones(1,length(p.cfgTFR.foi));
     p.cfgTFR.toi                = (-p.times_tflock(1):10:p.times_tflock(2))/1000;	
 
-    p.cfgTFR.foi               = 4:1:40;	
+    p.cfgTFR.foi                = 4:1:42;	
     p.cfgTFR.pad                = 4;
-    p.cfgTFR.t_ftimwin         = .250.*ones(1,length(p.cfgTFR.foi));
+    p.cfgTFR.t_ftimwin          = .250.*ones(1,length(p.cfgTFR.foi));
 %     p.cfgTFR.t_ftimwin          = 3./p.cfgTFR.foi;
 %     p.cfgTFR.tapsmofrq          = 0.5*p.cfgTFR.foi;
 %     plottp(p.cfgTFR)
@@ -59,25 +59,20 @@ for tk = p.subj; % subject number
     for f = 1:9
         [trls.(fieldstoav{f}),events]  = define_event(cfg_eeg,eyedata,'ETtrigger',{'value',['==' num2str(trigs(f))]},p.times_tflock);            
     end
-%     [trls.trlLU_I,events]                = define_event(cfg_eeg,eyedata,'ETtrigger',{'value','==1'},p.times_tflock);            
-%     [trls.trlRU_I,events]                = define_event(cfg_eeg,eyedata,'ETtrigger',{'value','==2'},p.times_tflock);            
-%     [trls.trlLC_I,events]                = define_event(cfg_eeg,eyedata,'ETtrigger',{'value','==5'},p.times_tflock);            
-%     [trls.trlRC_I,events]                = define_event(cfg_eeg,eyedata,'ETtrigger',{'value','==6'},p.times_tflock);            
-%     [trls.image,events]                = define_event(cfg_eeg,eyedata,'ETtrigger',{'value','==96'},p.times_tflock);  
     
     % Locked to stimulus
     at  = 1;
     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/TFR_' p.analysis_type{at} '/'])
 
      for f = 1:9
-         TFR.(fieldstoav{f})  = getTFRsfromtrl({cfg_eeg},{trls.(fieldstoav{f})},p.bsl,p.reref,p.analysis_type{at},p.keep,p.cfgTFR);
-%          eval(['[TFR_' fieldstoav{f} '] = getTFRsfromtrl({cfg_eeg},{trls.' fieldstoav{f} '},p.bsl,p.reref,p.analysis_type{at},p.keep,p.cfgTFR);'])
+         TFR.(fieldstoav{f})  = getTFRsfromtrl({cfg_eeg},{trls.(fieldstoav{f})},...
+             p.bsl,p.reref,p.analysis_type{at},p.keep,p.cfgTFR);
      end
 
 %      mirroring left stimulation data to make contra/ipsi plots
     mirindx         = mirrindex(TFR.LU_I.(p.analysis_type{1}).label,[cfg_eeg.expfolder '/channels/mirror_chans']); 
-    TFR.LU_I_mirr      = TFR.LU_I;
-    TFR.LC_I_mirr      = TFR.LC_I;
+    TFR.LU_I_mirr   = TFR.LU_I;
+    TFR.LC_I_mirr   = TFR.LC_I;
     TFR.LU_I_mirr.(p.analysis_type{at}).powspctrm = TFR.LU_I.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
     TFR.LC_I_mirr.(p.analysis_type{at}).powspctrm = TFR.LC_I.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
 
@@ -149,11 +144,11 @@ mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.expfolder '/channels/mirror_ch
 
 GA.U_Ici             = GA.U_I;
 GA.U_Ici.powspctrm   = GA.U_I.powspctrm-GA.U_I.powspctrm(:,mirindx,:,:);
-GA.U_unIci             = GA.U_unI;
+GA.U_unIci           = GA.U_unI;
 GA.U_unIci.powspctrm = GA.U_unI.powspctrm-GA.U_unI.powspctrm(:,mirindx,:,:);
 GA.C_Ici             = GA.C_I;
 GA.C_Ici.powspctrm   = GA.C_I.powspctrm-GA.C_I.powspctrm(:,mirindx,:,:);
-GA.C_unIci             = GA.C_unI;
+GA.C_unIci           = GA.C_unI;
 GA.C_unIci.powspctrm = GA.C_unI.powspctrm-GA.C_unI.powspctrm(:,mirindx,:,:);
 
 %%
