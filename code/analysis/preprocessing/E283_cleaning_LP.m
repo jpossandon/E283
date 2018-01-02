@@ -2,7 +2,7 @@
 %%
 MACpath = '/Volumes/nibaldo/trabajo/E283/';
 %suj = str2num(getenv('SGE_TASK_ID'));
-for suj             = [50,54];
+for suj             = [54,47];
 eegfilename     = sprintf('s%02dvs',suj);
 suj             = sprintf('s%02dvs',suj);
 
@@ -65,7 +65,8 @@ save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.cle
 
 % here we check if there is a channel that is continuously bad even for the
 % lax criteria were using
-cfg                                 = eeg_etParams_E283(cfg,'clean_bad_channel_criteria',.25);
+cfg                                 = eeg_etParams_E283(cfg,'clean_bad_channel_criteria',.15,...
+                                                                'clean_bad_channel_denominator',{'S 96',[5000 17000]});
 check_session(cfg)
 
 % re-check bad segments now whitout taking in accound bad channels (done in badsegments and check_session)
@@ -130,7 +131,8 @@ cfg_clean                           = cfg;
 % save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean','value_g','tot_sample_g','value_a','tot_sample_a') % we save all this for now until we now the good seetings
 save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean') % TODO: info about the cleaning parameters
 
-cfg                                 = eeg_etParams_E283(cfg,'clean_bad_channel_criteria',.20);
+cfg                                 = eeg_etParams_E283(cfg,'clean_bad_channel_criteria',.10,...
+                                                                'clean_bad_channel_denominator',{'S 96',[5000 17000]}); % to take in account only relevant peaces, 5 second before and after the max length of a trial (12s) 
 check_session(cfg)
 
 % re-check bad segments now whitout taking in accound bad channels (done in badsegments)
@@ -149,9 +151,9 @@ load([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename 'pre'],
 save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','-append') % TODO: info about the cleaning parameters
 
 %%
-      cfgvis             = eeg_etParams_E283(cfg,...
-                                            'remove_eye',1,...
-                                            'remove_m',1,'raw',1); 
+%       cfgvis             = eeg_etParams_E283(cfg,...
+%                                             'remove_eye',0,...
+%                                             'remove_m',0,'raw',1); 
 %      visual_clean(cfgvis)
 %% 
 % run second definitive ICA

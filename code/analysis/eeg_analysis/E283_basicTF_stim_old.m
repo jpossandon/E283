@@ -28,9 +28,9 @@ for tk = p.subj; % subject number
     % p.cfgTFR.t_ftimwin          = .512*ones(1,length(p.cfgTFR.foi));
     p.cfgTFR.toi                = (-p.times_tflock(1):10:p.times_tflock(2))/1000;	
 
-    p.cfgTFR.foi                = 4:1:42;	
+    p.cfgTFR.foi                = 2.^(3:.125:5); %4:1:42	
     p.cfgTFR.pad                = 4;
-    p.cfgTFR.t_ftimwin          = .250.*ones(1,length(p.cfgTFR.foi));
+    p.cfgTFR.t_ftimwin          = .5.*ones(1,length(p.cfgTFR.foi));%.25
 %     p.cfgTFR.t_ftimwin          = 3./p.cfgTFR.foi;
 %     p.cfgTFR.tapsmofrq          = 0.5*p.cfgTFR.foi;
 %     plottp(p.cfgTFR)
@@ -96,11 +96,14 @@ for tk = p.subj; % subject number
         TFRav.(fieldstoav{f}).(p.analysis_type{1}) = ft_freqdescriptives([], TFR.(fieldstoav{f}).(p.analysis_type{1}));
     end
     save([cfg_eeg.analysisfolder cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg','p')
+    save(['/Users/jossando/trabajo/E283/analysis/' cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg','p')
 
 end
 
 %%
 % grand averages
+clear
+E283_params
 at                  = 1;
 p.analysis_type     = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
 cfgr                = [];
@@ -108,14 +111,16 @@ p.bsl               = [-.5 -.25];
 cfgr.baseline       = p.bsl;
 cfgr.baselinetype   = 'db';
 cfgr.keepindividual = 'yes';
-s=1
+s=1;
+MACpath = '/Users/jossando/trabajo/E283/';
+% MACpath = '/Volumes/nibaldo/trabajo/E283/';
 for tk = p.subj; % subject number
     if ismac    
-        cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','stimlockTFR','expfolder','/Volumes/nibaldo/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
+        cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','stimlockTFR','expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
     else
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','stimlockTFR');
     end
-    load([cfg_eeg.analysisfolder cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg')
+    load([cfg_eeg.analysisfolder cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav')
     fTFR    = fields(TFRav);
     for ff=1:length(fTFR)
         faux(s,ff) = ft_freqbaseline(cfgr,TFRav.(fTFR{ff}).(p.analysis_type{1}));
@@ -159,6 +164,9 @@ difffreq1       = ft_math(cfgs,GA.U_unI,GA.C_unI);
 difffreq2       = ft_math(cfgs,GA.U_I,GA.C_I);
 difffreq1       = ft_math(cfgs,GA.U_unIci,GA.C_unIci);
 difffreq2       = ft_math(cfgs,GA.U_Ici,GA.C_Ici);
+% difffreq1       = ft_math(cfgs,GA.U_unIci,GA.U_Ici);
+% difffreq2       = ft_math(cfgs,GA.C_unIci,GA.C_Ici);
+
 difffreq3      = ft_math(cfgs,difffreq2,difffreq1);
 % difffreq1   = ft_freqdescriptives([],difffreq1);
 % difffreq2   = ft_freqdescriptives([], difffreq2);
@@ -171,20 +179,22 @@ cfgp.showlabels = 'no';
 cfgp.fontsize   = 12; 
 cfgp.elec       = elec;
 cfgp.interactive    = 'yes';
+% cfgp.channel = mirindx(1:38);
 % cfgp.trials     =4
 %                  cfgp.baseline       = p.bsl;
 %                   cfgp.baselinetype   = 'db';
 % cfgp.ylim           = [0 40];
 %  cfgp.xlim           = [-.75 1.25];
-%         cfgp.zlim           = [-3 3];
+         cfgp.zlim           = [-1 1];
 %     cfgp.maskparameter = 'mask';
 %       cfgp.maskalpha = .3
 %     data = TFRav.C_I.ICAem;
 %        data = ft_freqdescriptives([],GA.C_unIci);
-        data =difffreq3;
+        data =difffreq2;
+%         data =GA.U_Ici;
 
 figure,ft_multiplotTFR(cfgp,data)
-
+% 2.^([3:.5:5]+-.25)
 %%
 % Comparisons stat
 % cfgr                = [];

@@ -1,7 +1,8 @@
 clear
 E283_params                                 % basic experimental parameters               % 
 p.analysisname  = 'spectra';
-%%
+MACpath = '/Volumes/nibaldo/trabajo/E283/';
+%
 % subject configuration and data
  s=1;
 for tk = p.subj
@@ -10,7 +11,7 @@ for tk = p.subj
 % tk = str2num(getenv('SGE_TASK_ID'));
     if ismac    
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),...
-            'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
+            'expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
     else
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),...
             'expfolder','/Users/jpo/trabajo/E283/');
@@ -119,7 +120,7 @@ for tk = p.subj
         spectra.(epTypes{eT})(s).F             = F;
         spectra.(epTypes{eT})(s).fpstr         = fpstr;
     end
-    s = s+1
+    s = s+1;
     save(fullfile(cfg_eeg.analysisfolder,cfg_eeg.analysisname,'allspectra'),'spectra')
 end
 
@@ -130,8 +131,10 @@ end
 clear
 E283_params                                 % basic experimental parameters               % 
 p.analysisname  = 'spectra';
+MACpath = '/Volumes/nibaldo/trabajo/E283/';
+
 if ismac    
-    cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jossando/trabajo/E283/','analysisname',p.analysisname); % this is just to being able to do analysis at work and with my laptop
+    cfg_eeg             = eeg_etParams_E283('expfolder',MACpath,'analysisname',p.analysisname); % this is just to being able to do analysis at work and with my laptop
 else
     cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jpo/trabajo/E283/','analysisname',p.analysisname);
 end
