@@ -2,7 +2,7 @@
 %%
 MACpath = '/Volumes/nibaldo/trabajo/E283/';
 %suj = str2num(getenv('SGE_TASK_ID'));
-for suj             = [54,47];
+for suj             = [43,44,45,46,47];
 eegfilename     = sprintf('s%02dvs',suj);
 suj             = sprintf('s%02dvs',suj);
 
@@ -76,7 +76,7 @@ check_session(cfg)
 % bad = bad_a; badchans = badchans_a;
 [bad,badchans]                      = combine_bad({bad_a;bad_g},{badchans_a,badchans_g},cfg.clean_minclean_interval);
 save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','bad_a','badchans_a','-append') % TODO: info about the cleaning parameters
-
+clear value_a value_g
 % run first ICA
 expica(cfg)
 
@@ -157,6 +157,7 @@ save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.cle
 %      visual_clean(cfgvis)
 %% 
 % run second definitive ICA
+clear value_a value_g
  expica(cfg)
 
 %%
@@ -206,6 +207,7 @@ channelbad                          = combine_bad([channelbad_a;channelbad_g;cha
 
 cfg_clean                           = cfg;
 save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean')  % TODO: info about the cleaning parameters
+clear value_a value_g
 % save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean','value_g','tot_sample_g','value_a','tot_sample_a','value','tot_sample')  % TODO: info about the cleaning parameters
 end
 % 
