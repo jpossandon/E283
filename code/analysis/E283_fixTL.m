@@ -17,7 +17,7 @@ for tk = p.subj
                                             'event',[filename '.vmrk'],...
                                             'clean_name','final',...
                                             'analysisname','fixLock');       % single experiment/session parameters 
-    cfg_eeg.eegfolder       = ['/Volumes/nibaldo/trabajo/E283/data/' filename '/'];
+   % cfg_eeg.eegfolder       = ['/Volumes/nibaldo/trabajo/E283/data/' filename '/'];
     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'])
     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/ERPs/'])
    
@@ -38,44 +38,26 @@ for tk = p.subj
     [trl,events]  = define_event(cfg_eeg,eyedata,1,{'&origstart',sprintf('>%d',0);...
             'revisit','==2';'refix','==0';'onTarg','==0'},p.win,{-2 1 'revisit' '==0'});
     [ERP.revisit2,toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-    fh = plot_topos(cfg_eeg,ERP.revisit2.(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' revisit lag2 / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_revisit_Lag2'],1)    
         
     [trl,events]  = define_event(cfg_eeg,eyedata,1,{'&origstart',sprintf('>%d',0);...
             'revisit','==3';'refix','==0';'onTarg','==0'},p.win,{-2 1 'revisit' '==0'});
     [ERP.revisit3,toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-    fh = plot_topos(cfg_eeg,ERP.revisit3.(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' revisit lag3 / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_revisit_Lag3'],1)    
         
     [trl,events]  = define_event(cfg_eeg,eyedata,1,{'&origstart',sprintf('>%d',0);...
             'revisit','>4';'refix','==0';'onTarg','==0'},p.win,{-2 1 'revisit' '==0'});  
      [ERP.revisit4,toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-    fh = plot_topos(cfg_eeg,ERP.revisit4.(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' revisit lag4 / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_revisit_Lag4'],1)       
         
     [trl,events]  = define_event(cfg_eeg,eyedata,1,{'&origstart',sprintf('>%d',0);...
             'revisit','==0';'refix','==0';'onTarg','==0'},p.win);
      [ERP.nore,toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-    fh = plot_topos(cfg_eeg,ERP.nore.(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' nore / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_nore'],1)       
         
     [trl,events]  = define_event(cfg_eeg,eyedata,1,{'&origstart',sprintf('>%d',0);...
             'revisit','==0';'refix','==0';'onTarg','==0'},p.win,{+2 1 'revisit' '==2'}) ;
     [ERP.prerevisit2,toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-    fh = plot_topos(cfg_eeg,ERP.prerevisit2.(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' prerevisit2 / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_prerevisit2'],1)  
         
     [trl,events]  = define_event(cfg_eeg,eyedata,1,{'&origstart',sprintf('>%d',0);...
             'revisit','==0';'refix','==0';'onTarg','==0'},p.win,{+2 1 'refix' '==1'}) ;
      [ERP.prerefix,toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-    fh = plot_topos(cfg_eeg,ERP.prerefix.(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' prerefix / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_prerefix'],1)     
     
     for ft = 0:5
         if ft == 0, oT =1;else,oT=0;end
@@ -87,20 +69,17 @@ for tk = p.subj
         fixdurs             = events.dur;
         fixdurs(toelim{1})  = [];
         [Y,sortFix]         = sort(fixdurs);
-        p.(['fix' num2str(ft)]) = fixdurs
-         fh = newtplot(squeeze(mean(ERPall.(p.analysis_type{1}).trial(sortFix,p.ch_tplot,:),2)),...
-                 ERPall.(p.analysis_type{1}).time,15,Y'/1000,p.colorlim,'ERPvsFix')
-         doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_fixpreT_' num2str(ft) '_centralCH'],1)
+         p.(['fix' num2str(ft)]) = fixdurs
+%          fh = newtplot(squeeze(mean(ERPall.(p.analysis_type{1}).trial(sortFix,p.ch_tplot,:),2)),...
+%                  ERPall.(p.analysis_type{1}).time,15,Y'/1000,p.colorlim,'ERPvsFix')
+%          doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
+%              'tiff',[ cfg_eeg.sujid '_fixpreT_' num2str(ft) '_centralCH'],1)
         allFix.(['fix' num2str(ft)]).ERP        = cat(1,allFix.(['fix' num2str(ft)]).ERP,squeeze(mean(ERPall.(p.analysis_type{1}).trial(sortFix,p.ch_tplot,:),2)));
         allFix.(['fix' num2str(ft)]).durs        = [allFix.(['fix' num2str(ft)]).durs,Y];
         
          p.keep          = 'no';
         [ERP.(['fix' num2str(ft)]),toelim] = getERPsfromtrl({cfg_eeg},{trl},p.bsl,p.rref,p.analysis_type{1},p.lpfreq,p.keep);
-         fh = plot_topos(cfg_eeg,ERP.(['fix' num2str(ft)]).(p.analysis_type{1}),p.interval,p.bsl,p.colorlim,[cfg_eeg.sujid ' fixpreT # ' num2str(ft) '/ bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-     
-         doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'],...
-             'tiff',[ cfg_eeg.sujid '_fixpreT_' num2str(ft)],1)
+        
     end
   save([cfg_eeg.analysisfolder cfg_eeg.analysisname '/ERPs/' cfg_eeg.sujid '_fixTL'],'ERP','p')
 end
@@ -121,7 +100,7 @@ at                  = 1;
 p.analysis_type     = {'ICAem'}; 
 cfgr                = [];
 s=1
-for tk = [6 7 11 12 15 19 22 20 21 23 26 27 28 29 31]; % subject number
+for tk = p.subj; % subject number
     if ismac    
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','fixLock','expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
     else

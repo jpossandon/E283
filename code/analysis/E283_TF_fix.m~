@@ -164,8 +164,8 @@ cfgp.baseline       = 'no'
 %           cfgp.xlim           = [-.4 .4];
 %   cfgp.zlim           = [4 15]
 %      cfgp.zlim           = [-1 1];
-%   data = GA.diff_fixLn1_nextRtarget;
-data = GA.fixRn0
+  data = GA.diff_fixLn1_nextRtarget;
+
   figure
         ft_multiplotTFR(cfgp,data)
 %  cfgp.comment = 'yes'

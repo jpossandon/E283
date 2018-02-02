@@ -10,14 +10,18 @@ data    = struct_elim(data,data.subject<6,2,1);
 subject = unique(data.subject);
 
 path = '/Users/jossando/trabajo/E283/data/';
-path2 = '/Volumes/nibaldo/trabajo/E283/data/';
+% path2 = '/Volumes/nibaldo/trabajo/E283/data/';
 for s = subject
-    mkdir(sprintf('%ss%02dvs',path,s))
-    copyfile(sprintf('%ss%02dvs/s%02dvs.mat',path2,s,s),sprintf('%ss%02dvs/s%02dvs.mat',path,s,s))
+%     mkdir(sprintf('%ss%02dvs',path,s))
+%     copyfile(sprintf('%ss%02dvs/s%02dvs.mat',path2,s,s),sprintf('%ss%02dvs/s%02dvs.mat',path,s,s))
     load(sprintf('%ss%02dvs/s%02dvs.mat',path,s,s))
     win.result.subject = s.*ones(1,length(win.result.rT));
     win.result.value   = zeros(1,length(win.result.rT));
-    win.result.value(stim.trial(stim.subject==s)) = stim.value(stim.subject==s);
+    if s==54
+        win.result.value(stim.trial(stim.subject==s)-17) = stim.value(stim.subject==s);    
+    else
+        win.result.value(stim.trial(stim.subject==s)) = stim.value(stim.subject==s);
+    end
     win.result.cue     = zeros(1,length(win.result.rT));
     win.result.cue(win.result.value>0 & win.result.value<7) = 1; % informative
     win.result.cue(win.result.value>7) = 2; % uninformative
@@ -25,6 +29,8 @@ for s = subject
 end
 save('/Users/jossando/trabajo/E283/analysis/eyedata/allRT','result')
 
+%%
+% infromation of tpos trial, and stimtime in result rt structure
 subj    = unique(result.subject); % which subject do we have
 aux20   = find(result.subject==20);
 result  =  struct_elim(result,aux20(1:26),2,0);
@@ -141,22 +147,36 @@ for ev = 1:length(data.posx)
 end
 toc
 %%
-% add performance, repeated and revisited fixation
+% add performance, type of cue repeated and revisited fixation
 load(fullfile(pathexp,'analysis','eyedata','allRT.mat'))
 result         = struct_elim(result,result.subject<6,2,1);
 save(fullfile(pathexp,'analysis','eyedata','allRTFULL.mat'),'result')
 
 data.tCorrect  = zeros(1,length(data.posx));
+data.value     = zeros(1,length(data.posx));
+data.stimtime  = nan(1,length(data.posx));
 data.orderPreT = nan(1,length(data.posx));
 data.refix     = zeros(1,length(data.posx));
 data.revisit   = zeros(1,length(data.posx));
 data.torevisit = zeros(1,length(data.posx));
 data.torefix   = zeros(1,length(data.posx));
+data.latposStim = nan(1,length(data.posx));
+data.orderposStim = nan(1,length(data.posx));
 tic
 for ss = unique(data.subject)
     ss
     for tt = unique(data.trial(data.subject==ss))
-        data.tCorrect(data.subject==ss & data.trial==tt) = result.perf(find(result.subject==ss & result.trial==tt));
+        data.tCorrect(data.subject==ss & data.trial==tt)    = result.perf(find(result.subject==ss & result.trial==tt));
+        data.value(data.subject==ss & data.trial==tt)       = result.value(find(result.subject==ss & result.trial==tt));
+        data.stim(data.subject==ss & data.trial==tt)        = result.stim(find(result.subject==ss & result.trial==tt));
+        data.stimtime(data.subject==ss & data.trial==tt)    = result.stimtime(find(result.subject==ss & result.trial==tt));
+        data.latposStim(data.subject==ss & data.trial==tt)  = data.start(data.subject==ss & data.trial==tt)-data.stimtime(data.subject==ss & data.trial==tt);
+        indxFirstPost   = data.latposStim(data.subject==ss & data.trial==tt)>0;
+        orderposStim    = nan(1,sum(data.subject==ss & data.trial==tt));
+        typeposStim     = data.type(data.subject==ss & data.trial==tt);
+        orderposStim(find(typeposStim==2 & indxFirstPost)) = 1:sum(typeposStim==2 & indxFirstPost);
+        orderposStim(find(typeposStim==1 & indxFirstPost)) = 1:sum(typeposStim==1 & indxFirstPost);
+        data.orderposStim(data.subject==ss & data.trial==tt) = orderposStim;
         if result.perf(find(result.subject==ss & result.trial==tt))
             data.orderPreT(data.subject==ss & data.trial==tt & data.type==1) = fliplr(0:sum(data.subject==ss & data.trial==tt & data.type==1)-1);
             data.orderPreT(data.subject==ss & data.trial==tt & data.type==2) = fliplr(0:sum(data.subject==ss & data.trial==tt & data.type==2)-1);
@@ -208,6 +228,8 @@ for tk = unique(data.subject); % subject number
     eyedata.events.xToTarg      = data.xToTarg(data.subject==tk);
     eyedata.events.yToTarg      = data.yToTarg(data.subject==tk);
     eyedata.events.tToTarg      = data.tToTarg(data.subject==tk);
+    eyedata.events.latposStim   = data.latposStim(data.subject==tk);
+    eyedata.events.orderposStim = data.orderposStim(data.subject==tk);
     save([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'],'eyedata')
 end
 %%
