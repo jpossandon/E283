@@ -96,14 +96,14 @@ SUMMARY.seRTCond        = SUMMARY.sdRTpCond./sqrt(Ns);
 figure, hold on
 set(gcf,'Position',[0 0 1280 700])
 axis([0 posVec.stimRes(1) 0 posVec.stimRes(2)])
-plot(data.posx(data.type==1 & data.start>0),data.posy(data.type==1 & data.start>0),'.k','MarkerSize',1)
+plot(data.posx(data.type==1 & data.start>0),data.posy(data.type==1 & data.start>0),'.k','MarkerSize',3)
 plot(posVec.scr(1,:),posVec.scr(2,:),'o','MarkerSize',16)
 axis ij
 vline(posVec.hLims)
 hline(posVec.vLims,'r:')
 tightfig
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-            'tiff',['allFixs_' namegr],1)
+            'pdf',['allFixs_' namegr],[],1)
         
 % this is for the different types of cue
 cuevalues = [1 2 5 6;9 10 13 14];
@@ -116,7 +116,7 @@ for ii = 1:2
         subplot(2,2,sp), hold on
         axis([0 posVec.stimRes(1) 0 posVec.stimRes(2)])
         plot(data.posx(data.type==1 & data.value==cuevalues(ii,sp) & data.start>0),...
-            data.posy(data.type==1 & data.value==cuevalues(ii,sp) & data.start>0),'.k','MarkerSize',1)
+            data.posy(data.type==1 & data.value==cuevalues(ii,sp) & data.start>0),'.k','MarkerSize',3)
         plot(posVec.scr(1,:),posVec.scr(2,:),'o','MarkerSize',16)
         axis ij
         vline(posVec.hLims)
@@ -126,7 +126,7 @@ for ii = 1:2
     end
     tightfig
     doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-                    'tiff',['allFixs_' namegr '_' infLabel{ii}],1)
+                    'pdf',['allFixs_' namegr '_' infLabel{ii}],[],1)
 end
 
 %%
@@ -135,7 +135,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 figure, hold on
-plot(SUMMARY.rTBINS+unique(diff(SUMMARY.rTBINS))/2,SUMMARY.rTpbin./repmat(sum(SUMMARY.rTpbin,2),1,size(SUMMARY.rTpbin,2)),...
+plot(SUMMARY.rTBINS+unique(diff(SUMMARY.rTBINS))/2,[SUMMARY.rTpbin./repmat(sum(SUMMARY.rTpbin,2),1,size(SUMMARY.rTpbin,2))]',...
     'Color',[.7 .7 .7])
 plot(SUMMARY.rTBINS+unique(diff(SUMMARY.rTBINS))/2,sum(SUMMARY.rTpbin./repmat(sum(SUMMARY.rTpbin,2),1,size(SUMMARY.rTpbin,2)))./Ns,...
     'Color',[0 0 0],'LineWidth',3)
@@ -152,7 +152,7 @@ ylabel('Frequency','FontSize',12)
 title(sprintf('N = %d',Ns),'FontSize',12)
 tightfig
  doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-             'tiff',['performance_' namegr],1)
+             'tiff',['performance_' namegr],[],1)
 
 % per condition  
 figure
@@ -167,13 +167,13 @@ plot(1:4,SUMMARY.meanRTpCond(1:4),'sk','MarkerSize',10,'LineWidth',1,'MarkerFace
 errorbar(5:8,SUMMARY.meanRTpCond(5:8),SUMMARY.seRTCond(5:8),'LineWidth',2,'Color',[.1 .1 .1])
 plot(5:8,SUMMARY.meanRTpCond(5:8),'sk','MarkerSize',10,'LineWidth',1,'MarkerFaceColor',[1 .3 .3])
     
-axis([.5 8.5 0 6])
+    axis([.5 8.5 0 6])
 set(gca,'FontSize',10,'XTick',1:length(SUMMARY.condLabels),'XTickLabel',SUMMARY.condLabels)
 ylabel('Reaction Time (s)','FontSize',12)
 
 tightfig
  doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-             'tiff',['RTpercond_' namegr],1)
+             'tiff',['RTpercond_' namegr],[],1)
 
 %%
 % figure reaction time per position
@@ -209,7 +209,7 @@ set(gca,'FontSize',10)
 colormap(cmap)
 
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-             'tiff',['RTperPos_' namegr],1)        
+             'tiff',['RTperPos_' namegr],[],1)        
 
 %%
 % figure reaction time per distance to the target
@@ -231,10 +231,10 @@ vline(0,':k')
 hline(0,':k')
 if lgscale
     hc = colorbar('colormap',cmap,'XTick',(log10([.1:.1:.9,1:10])+1)/2,'XTickLabel',[.1:.1:.9,1:10]);
-    doimage(gcf,fullfile(pathexp,'figures','behaviour'),'tiff',['RTdistTlog_' namegr],1)  
+    doimage(gcf,fullfile(pathexp,'figures','behaviour'),'tiff',['RTdistTlog_' namegr],[],1)  
 else
     hc = colorbar('colormap',cmap,'XTick',0:.1:1,'XTickLabel',[0:1:10]);
-        doimage(gcf,fullfile(pathexp,'figures','behaviour'),'tiff',['RTdistT_' namegr],1)  
+        doimage(gcf,fullfile(pathexp,'figures','behaviour'),'tiff',['RTdistT_' namegr],[],1)  
 end   
 
 %%
@@ -358,7 +358,7 @@ ylabel('# refix/revisit per trial','FontSize',12)
 title(sprintf('N = %d',Ns),'FontSize',12)
 tightfig
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-             'tiff',['corrRT_refix_revisit_' namegr],1)
+             'tiff',['corrRT_refix_revisit_' namegr],[],1)
 
 %%
 % figure correlation between refix nd revisit
@@ -375,7 +375,7 @@ ylabel('Reaction Time (s)','FontSize',12)
 title(sprintf('N = %d',Ns),'FontSize',12)
 tightfig
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-              'tiff',['corrrefix_revisit_' namegr],1)
+              'tiff',['corrrefix_revisit_' namegr],[],1)
 
 %%
 % revisit per lag
@@ -394,7 +394,7 @@ ylabel('revisit pre trial','FontSize',12)
 title(sprintf('N = %d',Ns),'FontSize',12)
 tightfig
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-             'tiff',['revisitlag_' namegr],1)
+             'tiff',['revisitlag_' namegr],[],1)
         
 
 %%
@@ -415,7 +415,7 @@ set(gca,'FontSize',10,'XTick',1:length(labels),'XTickLabel',labels)
 ylabel('Fixation duration (ms)','FontSize',12)
 tightfig
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-            'tiff',['fixdurs_' namegr],1)
+            'tiff',['fixdurs_' namegr],[],1)
 
 %%
 % figure fixation duration at different event orders
@@ -437,7 +437,7 @@ ylabel('Fixation duration (ms)','FontSize',12)
 title(sprintf('N = %d',Ns),'FontSize',12)
 tightfig
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-              'tiff',['fixdurperEO_' namegr],1)
+              'tiff',['fixdurperEO_' namegr],[],1)
         
 
 %%
@@ -471,7 +471,7 @@ ylabel('Fixation duration (ms)','FontSize',12)
 xlabel('Duration revisit at lag          Duration pre-revisit at lag         Duration to-revisit at lag')
 tightfig
   doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-               'tiff',['fixdursrevisit_' namegr],1)
+               'tiff',['fixdursrevisit_' namegr],[],1)
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -562,7 +562,7 @@ legend(h,{'#1 Mov','#2 Mov','#3 Mov','#4 Mov','#5 Mov'})
 
 clear h
   doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-                'tiff',['latToMove_' namegr],1)
+                'tiff',['latToMove_' namegr],[],1)
 
 % and per condition
 figure, hold on
@@ -581,7 +581,7 @@ xlabel('Latency to # movement per condition','FontSize',12)
 ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov Info','#2 Mov Info','#3 Mov Info','#4 Mov Info','#5 Mov Info'})
   doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-                'tiff',['latToMovePerCond_' namegr],1)
+                'tiff',['latToMovePerCond_' namegr],[],1)
 clear h
 % latency to move after stimulatio
 figure, hold on
@@ -596,7 +596,7 @@ xlabel('Latency to # movement after stimulus','FontSize',12)
 ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov','#2 Mov','#3 Mov'})
  doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-                 'tiff',['latToMoveAfterStim_' namegr],1)
+                 'tiff',['latToMoveAfterStim_' namegr],[],1)
 clear h
 
 % and per condition
@@ -616,7 +616,7 @@ xlabel('Latency to # movement after stimulus','FontSize',12)
 ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov Info','#2 Mov Info','#3 Mov Info'})
  doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-                 'tiff',['latToMoveAfterStimPerCond_' namegr],1)
+                 'tiff',['latToMoveAfterStimPerCond_' namegr],[],1)
              
 %%
 % proportion of movements
@@ -640,7 +640,7 @@ set(gca,'XTick',xpos,'XTickLabels',labels,'FontSize',10)
 ylabel('p()','FontSize',12)
 xlabel('Order from trial start of first movement after stim','FontSize',12)
  doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-                'tiff',['OrderMovAfterStim_' namegr],1)
+                'tiff',['OrderMovAfterStim_' namegr],[],1)
 
 %%
 % movements to the right by order after stim
@@ -665,7 +665,7 @@ ylabel('p(left/right field)','FontSize',12)
 set(gca,'XTick',xpos,'XTickLabel',labels)
 
   doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-               'tiff',['probRight_' namegr],1)
+               'tiff',['probRight_' namegr],[],1)
 
 %%
 % movement to the right by time after stimulation
@@ -690,7 +690,7 @@ ylabel('p(right)','FontSize',12)
 xlabel('time (ms)','FontSize',12)
 legend(h,SUMMARY.condLabels(1:4),'Location','Best')
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-               'tiff',['probRightAfterStimInf_' namegr],1)
+               'tiff',['probRightAfterStimInf_' namegr],[],1)
 figure, hold on
 px = 1; clear h
 for cV = SUMMARY.condValues(5:8)
@@ -709,7 +709,7 @@ legend(h,SUMMARY.condLabels(5:8),'Location','Best')
 ylabel('p(right)','FontSize',12)
 xlabel('time (ms)','FontSize',12)
 doimage(gcf,fullfile(pathexp,'figures','behaviour'),...
-               'tiff',['probRightAfterStimUni_' namegr],1)
+               'tiff',['probRightAfterStimUni_' namegr],[],1)
 %%
 % saccades gaze after stimulation per condition, moveemnt order and latency
 %%
@@ -779,6 +779,6 @@ for ss = 1:length(allgazes)
             title(SUMMARY.condLabels(wsP))
         end
          doimage(gcf,fullfile(pathexp,'figures','behaviour','sacpersubj'),...
-                   'tiff',sprintf('s%d_postStim%d_%s',subjects(ss),gOr,namegr),1)
+                   'tiff',sprintf('s%d_postStim%d_%s',subjects(ss),gOr,namegr),[],1)
     end
 end

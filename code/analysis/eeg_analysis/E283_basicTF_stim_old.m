@@ -291,6 +291,8 @@ for b = 1:length(bandnames)
 end
 
 %%
+setAbsoluteFigureSize
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SELECTED CHANNELS WITH SUBJECT VARIANCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -309,7 +311,7 @@ lineColors      = [134 16 9;22 79 134;11 93 24]/255;
 xaxis           = GAbsl.U_Ici.time;
 axLim           = [-.2 1 -2 2];
 
-setAbsoluteFigureSize
+
 for b = 1:length(bandnames)
     for ch = 1:length(chnstoPlot)
         freqs           = find(GAbsl.U_Ici.freq>bands(b,1) & GAbsl.U_Ici.freq<bands(b,2));

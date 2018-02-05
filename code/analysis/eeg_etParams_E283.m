@@ -6,7 +6,7 @@ if ~isstruct(varargin{1})
 
     % paths
 %     cfg.expfolder               = '/Users/jossando/trabajo/E275/';
-    cfg.expfolder               = '/net/store/nbp/projects/EEG/E283/'    
+    cfg.expfolder               = '/net/store/nbp/projects/EEG/E283/';    
     cfg.edfreadpath             = '/net/store/users/jossando/edfread/build/linux64/';
    
     % triggers and trial definition

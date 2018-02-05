@@ -17,8 +17,10 @@ for s = subject
     load(sprintf('%ss%02dvs/s%02dvs.mat',path,s,s))
     win.result.subject = s.*ones(1,length(win.result.rT));
     win.result.value   = zeros(1,length(win.result.rT));
-    if s==54
-        win.result.value(stim.trial(stim.subject==s)-17) = stim.value(stim.subject==s);    
+    if s==54  % this is a fix for subjects that have changes edf and result file becqause the EEG recording started late, trial are then not with the same numbering
+        win.result.value(stim.trial(stim.subject==s)-17) = stim.value(stim.subject==s); 
+    elseif s==66
+        win.result.value(stim.trial(stim.subject==s)-3) = stim.value(stim.subject==s); 
     else
         win.result.value(stim.trial(stim.subject==s)) = stim.value(stim.subject==s);
     end

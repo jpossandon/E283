@@ -130,7 +130,7 @@ p.colorlim  = [-6 6];
 for ff=1:length(fERP)
 
     fh            = plot_topos(cfg_eeg,GA.(fERP{ff}),p.interval,p.bsl,p.colorlim,['all ' fERP{ff}  ' / bsl: ' sprintf('%2.2f to %2.2f /',p.bsl(1),p.bsl(2))],1);
-    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'tiff',['all_' fERP{ff}],1)
+    doimage(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'tiff',['all_' fERP{ff}],[],1)
 % saveas(fh,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/all_imlock_' p.analysis_type{1} '_' fERP{ff}],'fig')
 % close(fh)
 end
@@ -143,5 +143,7 @@ cfgp.showlabels     = 'no';
 cfgp.fontsize       = 12; 
 cfgp.elec           = elec;
 cfgp.interactive    = 'yes';
+cfgp.baseline       = [-.25 -.15]
+% cfgp.graphcolor     = cbrewer('qual','Set1',9)*255
 % cfgp.clim      = [-.6 .6];
-figure,ft_multiplotER(cfgp,GA.nore,GA.fix0,GA.fix1,GA.fix2,GA.prerevisit2)
+figure,ft_multiplotER(cfgp,GA.fix0,GA.fix1,GA.fix2)
