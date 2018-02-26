@@ -1,5 +1,5 @@
 %%
-load('/Volumes/JINTENSO/trabajo/E283/data/s06vs/s06vs.mat')
+load('/Users/jossando/trabajo/E283/06_RawData/s06vs/s06vs.mat')
 vsPosGrid       = win.vsTrials(1).stimulus.posGrid;
 [grdY, grdX]    = size(vsPosGrid);
 posVec.borderH  = 10;
@@ -18,9 +18,9 @@ posVec.scr      = [scrPosX(:) scrPosY(:)]'; % 2-row vector, for PTB on DisplayPC
 posVec.wdth     = win.wdth;
 posVec.hght     = win.hght;
 posVec.target_thr   = win.targ_thr;
-
+posVec.pixxdeg  = posVec.stimRes(1)/(2*(180/pi)*atan(posVec.wdth/2/66));
 
 [mins] = min(posVec.scr');
 posVec.hLims = [round(mins(1)-posVec.dsX/2),round(unique(posVec.scr(1,:))+posVec.dsX/2)];
 posVec.vLims = [round(mins(2)-posVec.dsY/2),round(unique(posVec.scr(2,:))+posVec.dsY/2)];
-save('/Users/jossando/trabajo/E283/analysis/eyedata/tgtPos','posVec')
+save('/Users/jossando/trabajo/E283/07_Analysis/03_Eye/eyedata/tgtPos','posVec')

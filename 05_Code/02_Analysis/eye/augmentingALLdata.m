@@ -4,12 +4,12 @@
 clear
 pathexp = '/Users/jossando/trabajo/E283/';
 % create the file with all rT data
-load(fullfile(pathexp,'analysis','eyedata','alleyedata.mat'))
-load(fullfile(pathexp,'analysis','eyedata','tgtPos.mat'))
+load(fullfile(pathexp,'07_Analysis','03_Eye','eyedata','alleyedata.mat'))
+load(fullfile(pathexp,'07_Analysis','03_Eye','eyedata','tgtPos.mat'))
 data    = struct_elim(data,data.subject<6,2,1);
 subject = unique(data.subject);
 
-path = '/Users/jossando/trabajo/E283/data/';
+path = '/Users/jossando/trabajo/E283/06_RawData/';
 % path2 = '/Volumes/nibaldo/trabajo/E283/data/';
 for s = subject
 %     mkdir(sprintf('%ss%02dvs',path,s))
@@ -29,7 +29,7 @@ for s = subject
     win.result.cue(win.result.value>7) = 2; % uninformative
     result = struct_up('result',win.result,2);
 end
-save('/Users/jossando/trabajo/E283/analysis/eyedata/allRT','result')
+save('/Users/jossando/trabajo/E283/07_Analysis/03_Eye/eyedata/allRT','result')
 
 %%
 % infromation of tpos trial, and stimtime in result rt structure
@@ -83,7 +83,7 @@ for s = 1:length(subj)
     result.trial(auxindxres)    = auxtrial;
     result.stimtime(auxindxres) = auxtimestim;
 end
-save('/Users/jossando/trabajo/E283/analysis/eyedata/allRT','result')
+save('//Users/jossando/trabajo/E283/07_Analysis/03_Eye/eyedata/allRT','result')
 
 %%
 % assign to each fixation an element and to every saccade an starting and
@@ -97,7 +97,9 @@ data.xToTarg    = nan(1,length(data.posx));
 data.yToTarg    = nan(1,length(data.posx));
 data.tToTarg    = nan(1,length(data.posx));
 data.onTarg     = zeros(1,length(data.posx));
-data.nextToTarg = nan(3,length(data.posx));
+data.nextToTargH = nan(1,length(data.posx));
+data.nextToTargV = nan(1,length(data.posx));
+data.nextToTargD = nan(1,length(data.posx));
 tic
 for ev = 1:length(data.posx)
    
@@ -116,12 +118,13 @@ for ev = 1:length(data.posx)
             if ixH-J==0 && ixV-I==0              % on target
                 data.onTarg(ev) = 1;
             elseif abs(ixH-J)==1 && abs(ixV-I)==0 % horizontally next 
-                data.nextToTarg(1,ev) = 1;
+                data.nextToTargH(ev) = 1;
             elseif abs(ixH-J)==0 && abs(ixV-I)==1 % vertically next  
-                data.nextToTarg(2,ev) = 1;
+                data.nextToTargV(ev) = 1;
             elseif abs(ixH-J)==1 && abs(ixV-I)==1 % diagonally next  
-                data.nextToTarg(3,ev) = 1;
+                data.nextToTargD(ev) = 1;
             end
+                   
         end
         data.DToTarg(ev) = sqrt((data.posx(ev)-posVec.scr(1,data.tpos(ev))).^2+... % euclidian distance
             (data.posy(ev)-posVec.scr(2,data.tpos(ev))).^2);
@@ -145,14 +148,50 @@ for ev = 1:length(data.posx)
             end
         end
     end
+end
+%%
+% sequential movements
+data.seqmovH = nan(1,length(data.posx));
+data.seqmovV = nan(1,length(data.posx));
+data.seqmovD = nan(1,length(data.posx));
+data.seqmovRF = nan(1,length(data.posx));
+data.idiff    = nan(1,length(data.posx));
+data.jdiff    = nan(1,length(data.posx));
+for ev = 1:length(data.trial)-2
+    I1 = []; J1= [];I2 = []; J2= [];
+    if data.type(ev)==1 
+        if data.trial(ev)==data.trial(ev+2) &&  ...
+                data.type(ev+2)==1 && ~isnan(data.elfix(ev)) && ~isnan(data.elfix(ev+2))
+            [I1,J1]            = ind2sub([6 8],data.elfix(ev));
+            [I2,J2]            = ind2sub([6 8],data.elfix(ev+2));
+
+            
+        end
+    end
+    if data.type(ev)==2
+        if ~isnan(data.elfixini(ev)) && ~isnan(data.elfixend(ev))
+            [I1,J1]            = ind2sub([6 8],data.elfixini(ev));
+            [I2,J2]            = ind2sub([6 8],data.elfixend(ev));
+        end
+    end
+    if ~isempty(I2) && ~isempty(I1) && ~isempty(J2) && ~isempty(J1) 
+        idiff   = I2-I1;
+        jdiff   = J2-J1;
+        data.seqmovH(ev)   = idiff == 0 & abs(jdiff) == 1;                         % movement to the next horizontal symbol
+        data.seqmovV(ev)   = abs(idiff) == 1 & jdiff == 0;                         % movement to the next vertical symbol
+        data.seqmovD(ev)   = abs(idiff) == 1 & abs(jdiff)== 1;
+        data.seqmovRF(ev)  = idiff == 0 & jdiff == 0; 
+        data.idiff(ev) = idiff; 
+        data.jdiff(ev) = jdiff;
+    end
     
 end
 toc
 %%
 % add performance, type of cue repeated and revisited fixation
-load(fullfile(pathexp,'analysis','eyedata','allRT.mat'))
+load(fullfile(pathexp,'07_Analysis','03_Eye','eyedata','allRT.mat'))
 result         = struct_elim(result,result.subject<6,2,1);
-save(fullfile(pathexp,'analysis','eyedata','allRTFULL.mat'),'result')
+save(fullfile(pathexp,'07_Analysis','03_Eye','eyedata','allRTFULL.mat'),'result')
 
 data.tCorrect  = zeros(1,length(data.posx));
 data.value     = zeros(1,length(data.posx));
@@ -204,7 +243,7 @@ for ss = unique(data.subject)
     end
 end
 toc
-save(fullfile(pathexp,'analysis','eyedata','alleyedataFULL.mat'),'data')
+save(fullfile(pathexp,'07_Analysis','03_Eye','eyedata','alleyedataFULL.mat'),'data')
 %%
 % Get the relevant info into subjects eyedata files
 
@@ -222,7 +261,13 @@ for tk = unique(data.subject); % subject number
     eyedata.events.elfix        = data.elfix(data.subject==tk);
     eyedata.events.DToTarg      = data.DToTarg(data.subject==tk);
     eyedata.events.onTarg       = data.onTarg(data.subject==tk);
-    eyedata.events.nextToTarg   = data.nextToTarg(:,data.subject==tk);
+    eyedata.events.nextToTargH  = data.nextToTargH(data.subject==tk);
+    eyedata.events.nextToTargV  = data.nextToTargV(data.subject==tk);
+    eyedata.events.nextToTargD  = data.nextToTargD(data.subject==tk);
+    eyedata.events.seqmovH      = data.seqmovH(data.subject==tk);
+    eyedata.events.seqmovV      = data.seqmovV(data.subject==tk);
+    eyedata.events.seqmovD      = data.seqmovD(data.subject==tk);
+    eyedata.events.seqmovRF     = data.seqmovRF(data.subject==tk);
     eyedata.events.tCorrect     = data.tCorrect(data.subject==tk);
     eyedata.events.orderPreT    = data.orderPreT(data.subject==tk);
     eyedata.events.refix        = data.refix(data.subject==tk);

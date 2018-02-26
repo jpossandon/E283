@@ -6,7 +6,7 @@ for s = subjects
     cfg.filename        = sprintf('s%02dvs',s);
 %     cfg.EDFfolder       = sprintf('/home/th/Experiments/E275/data/s%02dvs/',s);
 %     cfg.EDFfolder       = sprintf('C:\\Users\\jpo\\trabajo\\E283\\data\\s%02dvs\\',s);
-     cfg.EDFfolder       = sprintf('/Users/jossando/trabajo/E283/data/s%02dvs/',s);
+     cfg.EDFfolder       = sprintf('/Users/jossando/trabajo/E283/06_RawData/s%02dvs/',s);
     eyedata             = eyeread2(cfg); 
     auxdata             = eyedata.events;
     

@@ -1,12 +1,11 @@
 %clean_path
 %%
-MACpath = '/Volumes/nibaldo/trabajo/E283/';
 MACpath = '/Users/jossando/trabajo/E283/';
-%suj = str2num(getenv('SGE_TASK_ID'));
-for suj             = [64,66];
+% datafileStruct
+
+for suj             = [68,69,71,72];
 eegfilename     = sprintf('s%02dvs',suj);
 suj             = sprintf('s%02dvs',suj);
-
 if ismac    
     cfg             = eeg_etParams_E283('sujid',suj,'expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
 else
@@ -62,7 +61,7 @@ channelbad                          = combine_bad([channelbad_a;channelbad_g],[]
 cfg_clean                           = cfg;
 
 % save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean','value_g','tot_sample_g','value_a','tot_sample_a') % we save all this for now until we now the good seetings
-save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean') % TODO: info about the cleaning parameters
+save([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean') % TODO: info about the cleaning parameters
 
 % here we check if there is a channel that is continuously bad even for the
 % lax criteria were using
@@ -76,7 +75,7 @@ check_session(cfg)
 [bad_a,badchans_a]                  = badsegments(cfg,value_a,tot_sample_a,cfg.clean_range_threshold);
 % bad = bad_a; badchans = badchans_a;
 [bad,badchans]                      = combine_bad({bad_a;bad_g},{badchans_a,badchans_g},cfg.clean_minclean_interval);
-save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','bad_a','badchans_a','-append') % TODO: info about the cleaning parameters
+save([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','bad_a','badchans_a','-append') % TODO: info about the cleaning parameters
 
 % run first ICA
 expica(cfg)
@@ -130,7 +129,7 @@ channelbad                          = combine_bad([channelbad_a;channelbad_g;cha
 cfg_clean                           = cfg;
 
 % save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean','value_g','tot_sample_g','value_a','tot_sample_a') % we save all this for now until we now the good seetings
-save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean') % TODO: info about the cleaning parameters
+save([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean') % TODO: info about the cleaning parameters
 
 cfg                                 = eeg_etParams_E283(cfg,'clean_bad_channel_criteria',.10,...
                                                                 'clean_bad_channel_denominator',{'S 96',[5000 17000]}); % to take in account only relevant peaces, 5 second before and after the max length of a trial (12s) 
@@ -146,10 +145,10 @@ cfg                                = eeg_etParams_E283(cfg,'clean_movwin_length'
 % we reuse the very bad segments becuase of range of step1 to get rid of
 % problems with some dataset where there is a very bad segment that gets
 % celan by ICA
-load([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename 'pre'],'bad_a','badchans_a') % TODO: info about the cleaning parameters
+load([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename 'pre'],'bad_a','badchans_a') % TODO: info about the cleaning parameters
 
 [bad,badchans]                     = combine_bad({bad_a;bad_a2;bad_g;bad_t},{badchans_a,badchans_a2,badchans_g,badchans_t},cfg.clean_minclean_interval);
-save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','-append') % TODO: info about the cleaning parameters
+save([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','-append') % TODO: info about the cleaning parameters
 
 %%
 %        cfgvis             = eeg_etParams_E283(cfg,...
@@ -206,7 +205,7 @@ cfg             = eeg_etParams_E283(cfg,...
 channelbad                          = combine_bad([channelbad_a;channelbad_g;channelbad_t],[],cfg.clean_minclean_interval);
 
 cfg_clean                           = cfg;
-save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean')  % TODO: info about the cleaning parameters
+save([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean')  % TODO: info about the cleaning parameters
 % save([cfg.analysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','channelbad','cfg_clean','value_g','tot_sample_g','value_a','tot_sample_a','value','tot_sample')  % TODO: info about the cleaning parameters
 end
 % 

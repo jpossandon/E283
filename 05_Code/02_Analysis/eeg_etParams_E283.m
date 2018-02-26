@@ -7,7 +7,7 @@ if ~isstruct(varargin{1})
     % paths
 %     cfg.expfolder               = '/Users/jossando/trabajo/E275/';
     cfg.expfolder               = '/net/store/nbp/projects/EEG/E283/';    
-    cfg.edfreadpath             = '/net/store/users/jossando/edfread/build/linux64/';
+%     cfg.edfreadpath             = '/net/store/users/jossando/edfread/build/linux64/';
    
     % triggers and trial definition
     cfg.trial_trig_eeg          = {'S  1','S  2','S  5','S  6','S  9','S 10','S 13','S 14','S 96'};                          % 'S  1','S  2','S  3', vm task eeg triggers 
@@ -78,11 +78,11 @@ else
         cfg.(varargin{nv}) = varargin{nv+1};
     end
 end
-cfg.datapath            = [cfg.expfolder 'data/'];
-cfg.chanloc             = [cfg.expfolder 'channels/easycapM1E275.txt'];              % text file with positions
-cfg.chanlocs            = [cfg.expfolder 'channels/chanlocseasycapM1E275'];             % eeglab ready format
-cfg.chanfile            = [cfg.expfolder 'channels/eleceasycapM1E275'];
-cfg.analysisfolder      = [cfg.expfolder 'analysis/'];
+cfg.datapath            = [cfg.expfolder '06_RawData/'];
+cfg.chanloc             = [cfg.expfolder '07_Analysis/01_Channels/easycapM1E275.txt'];              % text file with positions
+cfg.chanlocs            = [cfg.expfolder '07_Analysis/01_Channels/chanlocseasycapM1E275'];             % eeglab ready format
+cfg.chanfile            = [cfg.expfolder '07_Analysis/01_Channels/eleceasycapM1E275'];
+cfg.analysisfolder      = [cfg.expfolder '07_Analysis/'];
 
 %cfg.masterfile           = [cfg.expfolder 'subjects_master_files/' upper(cfg.sujid) 'wc'];
 
@@ -90,8 +90,10 @@ cfg.EDFfolder           = [cfg.datapath cfg.sujid  '/'];
 %cfg.xensor              = [cfg.datapath upper(cfg.sujid) '/xensor/'];
 cfg.eegfolder           = [cfg.datapath cfg.sujid '/'];
 cfg.matfolder           = [cfg.datapath cfg.sujid '/'];
-cfg.eyeanalysisfolder   = [cfg.analysisfolder 'eyedata/' cfg.sujid '/'];
-cfg.eegstats            = [cfg.analysisfolder 'eeg_stats/' cfg.sujid '/'];
+cfg.eyeanalysisfolder   = [cfg.analysisfolder '03_Eye/eyedata/subject_files/' cfg.sujid '/'];
+cfg.eeganalysisfolder   = [cfg.analysisfolder '04_EEG/'];
+cfg.preprocanalysisfolder   = [cfg.analysisfolder '02_Preprocessing/'];
+% cfg.eegstats            = [cfg.analysisfolder 'eeg_stats/' cfg.sujid '/'];
 %cfg.channelcorfolder    = [cfg.expfolder 'subjects_master_files/'];
 % cfg.tasks_info          = [    cfg.expfolder 'subjects_master_files/tasks_triggers.mat']; 
 
@@ -100,9 +102,11 @@ if ~isdir(cfg.eyeanalysisfolder), mkdir(cfg.eyeanalysisfolder),end
 % if ~isdir(cfg.eeganalysisfolder), mkdir(cfg.eeganalysisfolder),end
 if ~isdir(cfg.analysisfolder), mkdir(cfg.analysisfolder),end
 %     if ~isdir([cfg.analysisfolder 'expstats']), mkdir([cfg.analysisfolder 'expstats']),end
-if ~isdir([cfg.analysisfolder cfg.analysisname]), mkdir([cfg.analysisfolder cfg.analysisname]),end
-if ~isdir([cfg.analysisfolder 'ICAm/' cfg.sujid]), mkdir([cfg.analysisfolder 'ICAm/' cfg.sujid]),end
-if ~isdir([cfg.analysisfolder 'cleaning/' cfg.sujid]), mkdir([cfg.analysisfolder 'cleaning/' cfg.sujid]),end
+if ~strcmp(cfg.analysisname,'cleaning')
+    if ~isdir([cfg.eeganalysisfolder cfg.analysisname]), mkdir([cfg.eeganalysisfolder cfg.analysisname]),end
+end
+if ~isdir([cfg.preprocanalysisfolder 'ICAm/' cfg.sujid]), mkdir([cfg.preprocanalysisfolder 'ICAm/' cfg.sujid]),end
+if ~isdir([cfg.preprocanalysisfolder 'cleaning/' cfg.sujid]), mkdir([cfg.preprocanalysisfolder 'cleaning/' cfg.sujid]),end
 
-
+if ~isdir([cfg.preprocanalysisfolder 'ICAm/subjects_master_files/']),end
 

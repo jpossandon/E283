@@ -16,7 +16,7 @@ s=1
 for tk = p.subj % subject number
 
     % Analysis parameters
-    p.times_tflock              = [600 1100];
+    p.times_tflock              = [700 600];
     p.analysis_type             = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
     p.bsl                       = [-.400 -.150]; 
     p.reref                     = 'yes';
@@ -43,7 +43,7 @@ for tk = p.subj % subject number
     p.cfgTFR.taper              = 'dpss';
     p.cfgTFR.t_ftimwin          = 4./p.cfgTFR.foi;
     p.cfgTFR.tapsmofrq          = 0.5*p.cfgTFR.foi;
-    plottp(p.cfgTFR)
+%     plottp(p.cfgTFR)
 
     if ismac    
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),...
@@ -58,22 +58,28 @@ for tk = p.subj % subject number
                                             'EDFname',filename,...
                                             'event',[filename '.vmrk'],...
                                             'clean_name','final',...
-                                            'analysisname','stimlockTFRgamma');       % single experiment/session parameters 
+                                            'analysisname','saclockTFRdps');       % single experiment/session parameters 
   
 %     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'])
     load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])                         
+    eyedata.events.diffx = eyedata.events.posendx-eyedata.events.posinix;
     
-    fieldstoav      = {'LU_I','RU_I','LC_I','RC_I','LU_unI','RU_unI','LC_unI','RC_unI'};%,'IM'
-    trigs           = [1,2,5,6,9,10,13,14,96];
-    for f = 1:8
-        [trls.(fieldstoav{f}),events]  = define_event(cfg_eeg,eyedata,'ETtrigger',{'value',['==' num2str(trigs(f))]},p.times_tflock);            
-    end
-    
+    fieldstoav      = {'Left','Right'};%,'IM'
+   
+    [trls.Left,events]           = define_event(cfg_eeg,eyedata,2,{'origstart','>0';...
+                                'origstart','<1000';...                            
+                                'diffx','<0'},...
+                                p.times_tflock); 
+    [trls.Right,events]           = define_event(cfg_eeg,eyedata,2,{'origstart','>0';...
+                                'origstart','<1000';...                            
+                                'diffx','>0'},...
+                                p.times_tflock); 
+                            
     % Locked to stimulus
     at  = 1;
 %     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/TFR_' p.analysis_type{at} '/'])
     
-       for f = 1:8
+       for f = 1:2
 %          p.cfgTFR.output        = 'pow';
 %          p.cfgTFR.foi           = 8:1:40;
          [auxTFR toelim]    = getTFRsfromtrl({cfg_eeg},{trls.(fieldstoav{f})},...
@@ -81,32 +87,24 @@ for tk = p.subj % subject number
          auxTFR.N_tot       = [size(trls.(fieldstoav{f}),1)-length(toelim{1}), size(trls.(fieldstoav{f}),1)];
          N_allSubj(s,f,:)   = [size(trls.(fieldstoav{f}),1)-length(toelim{1}), size(trls.(fieldstoav{f}),1)];
          TFR.(fieldstoav{f}) = auxTFR;
+         clear auxTFR
        end
 
 %      mirroring left stimulation data to make contra/ipsi plots
-    mirindx         = mirrindex(TFR.LU_I.(p.analysis_type{1}).label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
-    TFR.LU_I_mirr   = TFR.LU_I;
-    TFR.LC_I_mirr   = TFR.LC_I;
-    TFR.LU_I_mirr.(p.analysis_type{at}).powspctrm = TFR.LU_I.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-    TFR.LC_I_mirr.(p.analysis_type{at}).powspctrm = TFR.LC_I.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-
+    mirindx         = mirrindex(TFR.Left.(p.analysis_type{1}).label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
+    Left_mirr   = TFR.Left;
+    Left_mirr.(p.analysis_type{at}).powspctrm = TFR.Left.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
+    
     cfgs            = [];
     cfgs.parameter  = 'powspctrm';
-    TFR.U_I.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RU_I.(p.analysis_type{1}),TFR.LU_I_mirr.(p.analysis_type{1})); % ERASEME: there was an error here apeenof TFR.RU with TFR.LU instead of TFR.LUmirr
-    TFR.C_I.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RC_I.(p.analysis_type{1}),TFR.LC_I_mirr.(p.analysis_type{1})); %SAME
-
-    TFR.LU_unI_mirr      = TFR.LU_unI;
-    TFR.LC_unI_mirr      = TFR.LC_unI;
-    TFR.LU_unI_mirr.(p.analysis_type{at}).powspctrm = TFR.LU_unI.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-    TFR.LC_unI_mirr.(p.analysis_type{at}).powspctrm = TFR.LC_unI.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-
-    TFR.U_unI.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RU_unI.(p.analysis_type{1}),TFR.LU_unI_mirr.(p.analysis_type{1})); % ERASEME: there was an error here apeenof TFR.RU with TFR.LU instead of TFR.LUmirr
-    TFR.C_unI.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RC_unI.(p.analysis_type{1}),TFR.LC_unI_mirr.(p.analysis_type{1})); %SAME
-
+    TFR.CI.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.Right.(p.analysis_type{1}),Left_mirr.(p.analysis_type{1})); % ERASEME: there was an error here apeenof TFR.RU with TFR.LU instead of TFR.LUmirr
+    clear Left_mirr
     fieldstoav = fields(TFR);
+    
     for f = 1:length(fieldstoav)
         TFRav.(fieldstoav{f}).(p.analysis_type{1}) = ft_freqdescriptives([], TFR.(fieldstoav{f}).(p.analysis_type{1}));
     end
+    clear TFR
     mkdir([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/'])
     save([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg','p')
     save([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/Nall'],'N_allSubj','fieldstoav')
@@ -120,7 +118,7 @@ end
 clear
 E283_params
 at                  = 1;
-p.analysisname = 'stimlockTFRgamma';
+p.analysisname      = 'saclockTFRdps';
 for b = 1%:2
     p.analysis_type     = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
     cfgr                = [];
@@ -159,16 +157,16 @@ for b = 1%:2
     end
 
 %     mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.expfolder '/channels/mirror_chans']); 
-  mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
+  mirindx         = mirrindex(GA.Left.label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
   
-    GA.U_Ici             = GA.U_I;
-    GA.U_Ici.powspctrm   = GA.U_I.powspctrm-GA.U_I.powspctrm(:,mirindx,:,:);
-    GA.U_unIci           = GA.U_unI;
-    GA.U_unIci.powspctrm = GA.U_unI.powspctrm-GA.U_unI.powspctrm(:,mirindx,:,:);
-    GA.C_Ici             = GA.C_I;
-    GA.C_Ici.powspctrm   = GA.C_I.powspctrm-GA.C_I.powspctrm(:,mirindx,:,:);
-    GA.C_unIci           = GA.C_unI;
-    GA.C_unIci.powspctrm = GA.C_unI.powspctrm-GA.C_unI.powspctrm(:,mirindx,:,:);
+    GA.Leftci             = GA.Left;
+    GA.Leftci.powspctrm   = GA.Left.powspctrm-GA.Left.powspctrm(:,mirindx,:,:);
+    GA.Rightci             = GA.Right;
+    GA.Rightci.powspctrm   = GA.Right.powspctrm-GA.Right.powspctrm(:,mirindx,:,:);
+    
+    GA.CIci             = GA.CI;
+    GA.CIci.powspctrm   = GA.CI.powspctrm-GA.CI.powspctrm(:,mirindx,:,:);
+    
     if b==1
         GAbsl = GA;
     else
@@ -181,20 +179,11 @@ cfgs            = [];
 cfgs.parameter  = 'powspctrm';
 cfgs.operation  = 'subtract';
 
- GAbsl.diffUIvsunI       = ft_math(cfgs,GAbsl.U_I,GAbsl.U_unI);
- GAbsl.diffCIvsunI       = ft_math(cfgs,GAbsl.C_I,GAbsl.C_unI);
-
- GAbsl.diffUIvsunIci       = ft_math(cfgs,GAbsl.U_Ici,GAbsl.U_unIci);
- GAbsl.diffCIvsunIci       = ft_math(cfgs,GAbsl.C_Ici,GAbsl.C_unIci);
-
- GAbsl.diffUCI       = ft_math(cfgs,GAbsl.U_I,GAbsl.C_I);
- GAbsl.diffUCunI       = ft_math(cfgs,GAbsl.U_unI,GAbsl.C_unI);
+ GAbsl.LeftvsRight       = ft_math(cfgs,GAbsl.Left,GAbsl.Right);
+ GAbsl.LeftvsRightci       = ft_math(cfgs,GAbsl.Leftci,GAbsl.Rightci);
  
- GAbsl.diffUCIci       = ft_math(cfgs,GAbsl.U_Ici,GAbsl.C_Ici);
- GAbsl.diffUCunIci       = ft_math(cfgs,GAbsl.U_unIci,GAbsl.C_unIci);
- GAbsl.diffUC_IvsUni      = ft_math(cfgs,GAbsl.diffUCI,GAbsl.diffUCunI);
- GAbsl.diffUC_IvsUnici      = ft_math(cfgs,GAbsl.diffUCIci,GAbsl.diffUCunIci);
-% difffreq2.mask   = statUC.mask;
+
+ 
 %%
 load(cfg_eeg.chanfile)
 cfgp                = [];
@@ -213,7 +202,7 @@ cfgp.interactive    = 'yes';
 %   cfgp.maskalpha      = 1;
 % cfgp.parameter      = 'stat';
 
-  data = GAbsl.diffUCIci
+  data = GAbsl.LeftvsRightci
 %      data =GAbsl.C_Ici;
 % %  data.mask = statUCIci.mask;
 figure,ft_multiplotTFR(cfgp,data)

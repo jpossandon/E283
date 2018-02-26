@@ -3,15 +3,16 @@
 % eeglab
 clear
 E283_params                                 % basic experimental parameters               % 
-p.analysisname  = 'deconvTF';
-%%
-% subject configuration and data
- 
+p.analysisname  = 'TL_dc_preT';
 if ismac 
 run('/Users/jossando/trabajo/matlab/unfold/init_unfold.m')        
 else
 run('/Users/jpo/trabajo/matlab/unfold/init_unfold.m')   
-end    
+end  
+%%
+% subject configuration and data
+ 
+  
 %p.subj              = [7,11,12,15];
 for tk =p.subj
     tk
@@ -34,30 +35,31 @@ for tk =p.subj
                                             'analysisname',p.analysisname);    % single experiment/session parameters 
    
     % get relevant epochevents
-    load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])            % eyedata               
-    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'orderPreT','<8'},...
-                                [800 100]); 
+    load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])            % eyedata   
+    eyedata.events.nextToTarg = any([eyedata.events.nextToTargH;eyedata.events.nextToTargV;eyedata.events.nextToTargD]);
+    [trl,events]           = define_event(cfg_eeg,eyedata,2,{'&origstart','>0';'orderPreT','<6'},...
+                                [800 100],{-1,1,'origstart','>0'}); 
     epochevents             = [];
     epochevents.latency     = events.start;                       % fixation start, here the important thing is the ini pos
+    epochevents.dur         = events.dur; 
     epochevents.type        = cell(1,length(events.start));
+    events.onTarg(2:2:end)  = events.onTarg(1:2:end); 
+    epochevents.dur(2:2:end)  = epochevents.dur(1:2:end);        % dur is dur of previos fix
+ 
+    epochevents.type(events.type==2 & events.orderPreT==0 & events.onTarg) = repmat({'sacpreT0onTarg'},1,sum(events.type==2 & events.orderPreT==0 & events.onTarg));
+    epochevents.type(events.type==2 & events.orderPreT==0 & ~events.onTarg) = repmat({'sacpreT0'},1,sum(events.type==2 & events.orderPreT==0 & ~events.onTarg));
+    epochevents.type(events.type==2 & events.orderPreT==1) = repmat({'sacpreT1'},1,sum(events.type==2 & events.orderPreT==1));
+    epochevents.type(events.type==2 & events.orderPreT>1) = repmat({'sacpre'},1,sum(events.type==2 & events.orderPreT>1));
+    epochevents.type(events.type==1) = repmat({'fix'},1,sum(events.type==1))
     
-    for tf = 0:8
-        if tf==0
-            epochevents.type(events.type==1 & events.orderPreT==tf) = repmat({['fixpreT' num2str(tf)]},1,sum(events.type==1 & events.orderPreT==tf));
-        elseif tf==1
-            epochevents.type(events.type==1 & events.orderPreT==tf & events.onTarg) = repmat({['fixpreT1OnTarg']},1,sum(events.type==1 & events.orderPreT==tf & events.onTarg));
-             epochevents.type(events.type==1 & events.orderPreT==tf & ~events.onTarg & any(events.nextToTarg) ) = repmat({['fixpreT' num2str(tf) 'nextT']},1,sum(events.type==1 & events.orderPreT==tf & ~events.onTarg & any(events.nextToTarg) ));
-            epochevents.type(events.type==1 & events.orderPreT==tf & ~events.onTarg & ~any(events.nextToTarg)) = repmat({['fixpreT' num2str(tf)]},1,sum(events.type==1 & events.orderPreT==tf & ~events.onTarg & ~any(events.nextToTarg)));
-        
-        elseif tf==2
-            epochevents.type(events.type==1 & events.orderPreT==tf & any(events.nextToTarg) ) = repmat({'fixpreT2nextT'},1,sum(events.type==1 & events.orderPreT==tf & any(events.nextToTarg)));
-            epochevents.type(events.type==1 & events.orderPreT==tf & ~any(events.nextToTarg) ) = repmat({['fixpreT' num2str(tf)]},1,sum(events.type==1 & events.orderPreT==tf & ~any(events.nextToTarg)));
-        
-        else
-            epochevents.type(events.type==1 & events.orderPreT==tf & any(events.nextToTarg) ) = repmat({'fixnextT'},1,sum(events.type==1 & events.orderPreT==tf & any(events.nextToTarg)));
-            epochevents.type(events.type==1 & events.orderPreT==tf & ~any(events.nextToTarg) ) = repmat({['fixpreT' num2str(tf)]},1,sum(events.type==1 & events.orderPreT==tf & ~any(events.nextToTarg)));
-        end
-    end
+    
+%     epochevents.type(events.type==1 & events.orderPreT==0) = repmat({'fixpreT0'},1,sum(events.type==1 & events.orderPreT==0));
+%     epochevents.type(events.type==1 & events.orderPreT==1 & events.onTarg)    = repmat({'fixpreT1onTarg'},1,sum(events.type==1  & events.orderPreT==1 & events.onTarg));
+%     epochevents.type(events.type==1 & events.orderPreT==1 & ~events.onTarg)   = repmat({'fixpreT1'},1,sum(events.type==1  & events.orderPreT==1 & ~events.onTarg));
+%     epochevents.type(events.type==1 & events.orderPreT>1 & ~events.onTarg)    = repmat({'fixpre'},1,sum(events.type==1 & events.orderPreT>1 & ~events.onTarg & ~events.nextToTarg));
+%     epochevents.type(events.type==1 & events.orderPreT>1 & events.onTarg)     = repmat({'fixpreonTarg'},1,sum(events.type==1  & events.orderPreT>1 & events.onTarg));
+%     epochevents.type(events.type==1 & events.orderPreT>1 & events.nextToTarg) = repmat({'fixprenextTarg'},1,sum(events.type==1 & events.orderPreT>1 & events.nextToTarg));
+    
 
     epochevents.orderposStim= events.orderposStim;
     epochevents.pxini       = (events.posinix-960)/45;            
@@ -92,6 +94,7 @@ for tk =p.subj
     ETinst(ismember(events.value,[9 10 13 14])) = -1;
     epochevents.inst       = [epochevents.inst,ETinst];
     
+    epochevents.dur       = [epochevents.dur,nan(1,length(events.value))];
     epochevents.pxini       = [epochevents.pxini,nan(1,length(events.value))];    
     epochevents.pyini       = [epochevents.pyini,nan(1,length(events.value))];       
     epochevents.pxend       = [epochevents.pxend,nan(1,length(events.value))];          
@@ -100,8 +103,9 @@ for tk =p.subj
     epochevents.pydiff      = [epochevents.pydiff,nan(1,length(events.value))];  
     epochevents.orderposStim= [epochevents.orderposStim,nan(1,length(events.value))];  
     % getting the data in EEGlab format
-    [EEG,winrej] = getDataDeconv(cfg_eeg,epochevents,90); 
-    mirindx         = mirrindex({EEG.chanlocs.labels},[cfg_eeg.expfolder '/channels/mirror_chans']); 
+    [EEG,winrej] = getDataDeconv(cfg_eeg,epochevents,100); 
+    EEG = pop_eegfiltnew(EEG, [],45,300);
+    mirindx         = mirrindex({EEG.chanlocs.labels},[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
        
     if any(strfind(p.analysisname,'CI'))
         LstimTimes = epochevents.latency(strcmp(epochevents.type,'stim') & epochevents.side == -1);
@@ -121,62 +125,37 @@ for tk =p.subj
     end
     % deconvolution design
     cfgDesign           = [];
-%     cfgDesign.eventtype = {'fix','sac','image','stim'};
-%     cfgDesign.formula   = {'y ~pxini+pyini','y~pxdiff+pydiff','y~1','y~side*cross*inst'};
-%     model               = 'Fxy_Sxdyd_IM_STsc';
-    cfgDesign.eventtype = {'fixpreT0','fixpreT1','fixpreT2','fixpreT3','fixpreT4','fixpreT5',...
-        'fixnextT','fixpreT1OnTarg','fixpreT1nextT','fixpreT2nextT','image','stim'};
-     
-    cfgDesign.formula   = {'y ~pxini+pyini','y ~pxini+pyini','y ~pxini+pyini','y ~pxini+pyini',...
-        'y ~pxini+pyini','y ~pxini+pyini','y ~pxini+pyini','y ~pxini+pyini','y ~pxini+pyini','y ~pxini+pyini','y~1','y~cross*inst'};
-    model               = 'FpreTxy_IM_STsc';
+
+%     cfgDesign.eventtypes = {'fixpreT0','fixpreT1onTarg','fixpreT1','fixpre',...
+%          'fixpreonTarg','fixprenextTarg','image','stim'};
+%     cfgDesign.formula   = {'y ~pxini+pyini','y ~pxini+pyini+spl(dur,10)','y ~pxini+pyini+spl(dur,10)','y ~pxini+pyini+spl(dur,10)','y ~pxini+pyini+spl(dur,10)',...
+%         'y ~pxini+pyini+spl(dur,10)','y ~pxini+pyini+spl(dur,10)','y~1','y~cat(cross)*cat(inst)*cat(side)'};
+%     model               = 'FpreTxyspl_IM_STsc';
+    
+    cfgDesign.eventtypes = {'sacpreT0onTarg','sacpreT0',...
+                            'sacpreT1','sacpre',...
+                            'image','stim'};
+    cfgDesign.formula   = {'y ~pxdiff+pxend','y ~pxdiff+pxend',...
+                            'y ~pxdiff+pxend','y ~pxdiff+pxend',...
+                            'y~1','y~cat(cross)*cat(inst)*cat(side)'};
+    model               = 'SpreT0onT_T0_T1_pre_xdxe_IM_STsc';
 
     EEG                 = dc_designmat(EEG,cfgDesign);
     cfgTexp             = [];
-    cfgTexp.timelimits  = [-.6,.7];tic
+    cfgTexp.timelimits  = [-.7,.7];tic
     EEG                 = dc_timeexpandDesignmat(EEG,cfgTexp);toc
     EEG                 = dc_continuousArtifactExclude(EEG,struct('winrej',winrej,'zerodata',0));
     EEG                 = dc_glmfit(EEG);
  
     unfold              = dc_beta2unfold(EEG);
-    for nep = 1:length(unfold.epoch)
-        if iscell(unfold.epoch(nep).event)
-            unfold.epoch(nep).event = cell2mat(unfold.epoch(nep).event);
-        end
-    end
-    
-  % ploting beta averages
-%      mkdir(fullfile(cfg_eeg.analysisfolder,cfg_eeg.analysisname,model,'figures_subjects',cfg_eeg.sujid))
-     
-%      B = unfold.beta;
-%      collim = [-.2 .2];
-%      p.coeff = strrep({unfold.epoch.name},':','_');
-%      p.coeff = strrep(p.coeff,'(','');
-%      p.coeff = strrep(p.coeff,')','');
-%      etype   = {unfold.epoch.event};
-%      for b = 1:size(B,3);
-%         betas.dof   = 1;
-%         betas.n     = 1;
-%         betas.avg   = permute(B(:,:,b),[1,3,2]);
-%         betas.avg   = B(:,:,b);
-%         collim      = [-6*std(betas.avg(:)) 6*std(betas.avg(:))]; 
-%         
-%         betas.time      = unfold(1).times; 
-%         auxresult.time  =  unfold(1).times;
-%         fh = plot_stat(cfg_eeg,auxresult,betas,[],[-.4 .8 .02],collim,.05,sprintf('Beta: %s %s',strrep(p.coeff{b},'_',' | '),etype{b}),1);
-% %            doimage(fh,fullfile(cfg_eeg.analysisfolder,cfg_eeg.analysisname,model,'figures_subjects',cfg_eeg.sujid),'png',...
-% %                 [datestr(now,'ddmmyy') cfg_eeg.sujid '_'  etype{b} '_' p.coeff{b}],1)
-%      end
 
-      mkdir(fullfile(cfg_eeg.analysisfolder,cfg_eeg.analysisname,model,'glm'))
-      save(fullfile(cfg_eeg.analysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
+      mkdir(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm'))
+      save(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
       clear unfold
 end 
 %%
 % %2nd level analysis
-clear
-E283_params                                 % basic experimental parameters               % 
-p.analysisname  = 'deconvTF';
+
  if ismac    
         cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jossando/trabajo/E283/','analysisname', p.analysisname); % this is just to being able to do analysis at work and with my laptop
     else
@@ -184,13 +163,15 @@ p.analysisname  = 'deconvTF';
  end
     
 stimB = [];
-% model               = 'Fxy_Sxdyd_IM_STsc';
-% model               = 'IM_STsc';
- model               = 'FpreTxy_IM_STsc';
-bslcor    = [-.2 0];
+
+ model               =  'SpreT0onT_T0_T1_pre_xdxespl_IM_STsc';
+ model               = 'SpreT0onT_T0_T1_pre_xdxe_IM_STsc';
+bslcor    = [];
+stimSpl = [];
+splmes =   linspace(100,300,6);
 for tk = p.subj
      cfg_eeg             = eeg_etParams_E283(cfg_eeg,'sujid',sprintf('s%02dvs',tk));
-    load(fullfile(cfg_eeg.analysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
+    load(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
 %     if any(strfind(p.analysisname,'mirr'))
 %         mirindx         = mirrindex({unfold.chanlocs.labels},[cfg_eeg.expfolder '/channels/mirror_chans']); 
 %         stimB = cat(4,stimB,permute(unfold.beta-unfold.beta(mirindx ,:,:),[1,3,2]));
@@ -201,29 +182,61 @@ for tk = p.subj
     else
         stimB = cat(4,stimB,permute(unfold.beta(:,:,:),[1,3,2]));
     end
-%     end
+%       for us = 2:4
+%          unfold.deconv.splines{us}.name = [num2str(us) '_dur'];
+%       end
+%       
+%      splnames = {'dur','2_dur','3_dur','4_dur'};
+%      
+%      auxstimSpl = [];
+%       for ss = 1:length(splnames)
+%         cfgu.plotParam  = {splnames{ss}};
+%         cfgu.pred_value = {{splnames{ss},splmes}};
+%         unf             = dc_getParam(unfold,cfgu);
+%         unf             = dc_addmarginal(unf);
+%          auxstimSpl = cat(4, auxstimSpl,unf.beta(:,:,strmatch(splnames{ss},{unf.param.name})));
+%       end
+%      stimSpl = cat(5,stimSpl,auxstimSpl);
 end
+
+%
+% splavg = mean(stimSpl,5);
+% diffspl = mean(squeeze(stimSpl(:,:,:,1,:)-stimSpl(:,:,:,2,:)),4);
+% cmap = cbrewer('qual','Paired',length(splmes));
+% 
+% for ch=[5 26 58]
+% figure,hold on
+%     for ss = 1:length(splmes)
+%          h = plot(unf.times,squeeze(splavg(ch,:,ss,1)),'Color',cmap(ss,:));,hold on
+%          plot(unf.times,squeeze(splavg(ch,:,ss,2)),'--','Color',cmap(ss,:))
+%         plot(unf.times,squeeze(diffspl(ch,:,ss)),':','Color',cmap(ss,:),'LineWidth',1.5)
+%     end
+%     title(unfold.chanlocs(ch).labels)
+% % set(h, {'color'}, num2cell(cmap, 2));
+% vline(splmes/1000,':k')
+% end
+
 %
 load(cfg_eeg.chanfile)
 result      = regmodel2ndstat(stimB,unfold.times,elec,1000,'signpermT','cluster');
 
-coeffs  = strrep({unfold.epoch.name},':','XX');
+coeffs  = strrep({unfold.param.name},':','XX');
 coeffs  = strrep(coeffs,'(','');
 coeffs  = strrep(coeffs,')','');
-coeffs = strcat({unfold(1).epoch.event}','_',coeffs');
+coeffs = strcat([unfold.param.event]','_',coeffs');
 result.coeffs = coeffs;
-mkdir(fullfile(cfg_eeg.analysisfolder,p.analysisname ,model,'glm'))
+mkdir(fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'glm'))
 if ~isempty(bslcor) 
- save(fullfile(cfg_eeg.analysisfolder,p.analysisname ,model,'glm','glmALLbslcorr'),'result')
+ save(fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'glm','glmALLbslcorr'),'result')
 else
-    save(fullfile(cfg_eeg.analysisfolder,p.analysisname ,model,'glm','glmALL'),'result')
+    save(fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'glm','glmALL'),'result')
 end
 %
 %%
 if ~isempty(bslcor)
-    pathfig = fullfile(cfg_eeg.analysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy') '_bslcorr']);
+    pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy') '_bslcorr']);
 else
-    pathfig = fullfile(cfg_eeg.analysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy')]);
+    pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy')]);
 end
 mkdir(pathfig)
 plotinterval = [-.3  .2 .02;.2 .7 .02];
@@ -237,7 +250,7 @@ for b=1:size(result.B,2)
     % topoplot across time according to interval with significant
     % clusters
     collim      =[-6*std(betas.avg(:)) 6*std(betas.avg(:))]; 
-    collim      =[-6 6]; 
+%     collim      =[-6 6]; 
     for pint = 1:size(plotinterval,1)
         fh       = topomitlines(cfg_eeg,result.clusters(b),betas,plotinterval(pint,:),collim);
         figsize  = [17.6 17.6*fh.Position(4)/fh.Position(3)];
@@ -252,14 +265,16 @@ setAbsoluteFigureSize
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SELECTED CHANNELS WITH SUBJECT VARIANCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% p.analysisname  = 'deconvTF';
+cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jossando/trabajo/E283/','analysisname', p.analysisname); % this is just to being able to do analysis at work and with my laptop
+   
 load(cfg_eeg.chanlocs)
 timeLim         = [-.3 .7];
 chnstoPlot      = {{'FC1','FCz','FC2','C1','Cz','C2','CP1','CPz','CP2'},{'O1','Oz','O2'},...
     {'P5','P7','PO7'},{'P6','P8','PO8'}};
 lineColors      = cbrewer('qual','Set1',9);%[134 16 9;22 79 134;11 93 24]/255;
-Bnames        = {'fixpreT0_Intercept','fixpreT1_Intercept','fixpreT2_Intercept',...
-    'fixpreT3_Intercept','fixpreT4_Intercept','fixnextT_Intercept','fixpreT1OnTarg_Intercept','fixpreT1nextT_Intercept','fixpreT2nextT_Intercept'};
-
+Bnames        = {'sacpreT0onTarg_Intercept','sacpreT0_2_Intercept',...
+                            'sacpreT1_3_Intercept','sacpre_4_Intercept'}
 xaxis           = result.clusters(1).time;
 axLim           = [-.3 .7 -5 9];
 
@@ -279,12 +294,12 @@ for ch = 1:length(chnstoPlot)
     xlabel('Time (s)','FontSize',12)
     ylabel('\muV','Interpreter','tex','FontSize',12)
     figsize     = [8 8*fh.Position(4)/fh.Position(3)];
-%     doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_Inf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
+%     doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_Inf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
 end
 %%
 for ch = 1:length(chnstoPlot)
     figure
     tp = topo_markCh(cfg_eeg,chnstoPlot{ch});
     tightfig
-%     doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',['Channs_' strjoin('_',chnstoPlot{ch})],[2 2],1)
+%     doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',['Channs_' strjoin('_',chnstoPlot{ch})],[2 2],1)
 end

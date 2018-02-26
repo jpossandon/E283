@@ -16,18 +16,18 @@ s=1
 for tk = p.subj % subject number
 
     % Analysis parameters
-    p.times_tflock              = [600 1100];
+    p.times_tflock              = [2000 1500];
     p.analysis_type             = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
-    p.bsl                       = [-.400 -.150]; 
+    p.bsl                       = [-1.5 -1]; 
     p.reref                     = 'yes';
     p.keep                      = 'yes';
     p.collim                    = [0 2];
     p.cfgTFR.channel            = 'all';	
-    p.cfgTFR.keeptrials         = 'yes';
+    p.cfgTFR.keeptrials         = 'no';
     p.cfgTFR.toi                = (-p.times_tflock(1):10:p.times_tflock(2))/1000;	
-    p.cfgTFR.foi                = 2.^(3:.125:7);%(2.^([3:.25:5.25]));% %6:1:40	
-    p.cfgTFR.method             = 'mtmconvol';%'wavelet';%%
-    
+    p.cfgTFR.foi                = 6:1:40;%6:1:80;%2.^(3:.125:5);%(2.^([3:.25:5.25]));% %6:1:40	
+    p.cfgTFR.method             = 'wavelet';%%'mtmconvol';%
+    p.cfgTFR.output             = 'pow';
     % wavelet parameters       
     %time of a cycle in ms times number of cicles divide by two for baseline limit :1/fo*width/2 
     %bandwith sf = f0/width   st = 1/(2*pi*f0/width)
@@ -43,7 +43,7 @@ for tk = p.subj % subject number
     p.cfgTFR.taper              = 'dpss';
     p.cfgTFR.t_ftimwin          = 4./p.cfgTFR.foi;
     p.cfgTFR.tapsmofrq          = 0.5*p.cfgTFR.foi;
-    plottp(p.cfgTFR)
+%    plottp(p.cfgTFR)
 
     if ismac    
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),...
@@ -58,61 +58,50 @@ for tk = p.subj % subject number
                                             'EDFname',filename,...
                                             'event',[filename '.vmrk'],...
                                             'clean_name','final',...
-                                            'analysisname','stimlockTFRgamma');       % single experiment/session parameters 
+                                            'analysisname','preT_TFRwavlong');       % single experiment/session parameters 
   
 %     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'])
     load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])                         
+    eyedata.events.nextToTarg =any(eyedata.events.nextToTarg);
+    fieldstoav = {'fixpreT0',...
+                'fixpreT1OnTarg','fixpreT1nextT','fixpreT1',...
+                'fixpreT2nextT','fixpreT2',...
+                'fixpreT3nextT','fixpreT3',...
+                'fixpreT4nextT','fixpreT4',...
+                'fixpreT5nextT','fixpreT5'};
+    oPT      = [0 1 1 1 2 2 3 3 4 4 5 5];
+    onT      = [1 1 0 0 0 0 0 0 0 0 0 0];
+    ntT      = [0 0 1 0 1 0 1 0 1 0 1 0];
     
-    fieldstoav      = {'LU_I','RU_I','LC_I','RC_I','LU_unI','RU_unI','LC_unI','RC_unI'};%,'IM'
-    trigs           = [1,2,5,6,9,10,13,14,96];
-    for f = 1:8
-        [trls.(fieldstoav{f}),events]  = define_event(cfg_eeg,eyedata,'ETtrigger',{'value',['==' num2str(trigs(f))]},p.times_tflock);            
+    at=1;
+    for tt = [1,8]%:length(fieldstoav)
+        [trls.(fieldstoav{tt}),events]           = define_event(cfg_eeg,eyedata,1,{'origstart','>0';...
+                                'orderPreT',['==' num2str(oPT(tt))];...
+                                'onTarg',['==' num2str(onT(tt))];...
+                                'nextToTarg',['==' num2str(ntT(tt))]},...
+                                p.times_tflock); 
     end
     
-    % Locked to stimulus
-    at  = 1;
-%     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/TFR_' p.analysis_type{at} '/'])
-    
-       for f = 1:8
-%          p.cfgTFR.output        = 'pow';
-%          p.cfgTFR.foi           = 8:1:40;
-         [auxTFR toelim]    = getTFRsfromtrl({cfg_eeg},{trls.(fieldstoav{f})},...
-             p.bsl,p.reref,p.analysis_type{at},p.keep,p.cfgTFR);
-         auxTFR.N_tot       = [size(trls.(fieldstoav{f}),1)-length(toelim{1}), size(trls.(fieldstoav{f}),1)];
-         N_allSubj(s,f,:)   = [size(trls.(fieldstoav{f}),1)-length(toelim{1}), size(trls.(fieldstoav{f}),1)];
-         TFR.(fieldstoav{f}) = auxTFR;
-       end
+   for tt = [1,8]%:length(fieldstoav)
+        [auxTFR toelim]    = getTFRsfromtrl({cfg_eeg},{trls.(fieldstoav{tt})},...
+                            p.bsl,p.reref,p.analysis_type{at},p.keep,p.cfgTFR);
+         auxTFR.N_tot       = [size(trls.(fieldstoav{tt}),1)-length(toelim{1}), size(trls.(fieldstoav{tt}),1)];
+        N_allSubj(s,tt,:)   = [size(trls.(fieldstoav{tt}),1)-length(toelim{1}), size(trls.(fieldstoav{tt}),1)];
+        TFR.(fieldstoav{tt}) = auxTFR;
+   end
 
 %      mirroring left stimulation data to make contra/ipsi plots
-    mirindx         = mirrindex(TFR.LU_I.(p.analysis_type{1}).label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
-    TFR.LU_I_mirr   = TFR.LU_I;
-    TFR.LC_I_mirr   = TFR.LC_I;
-    TFR.LU_I_mirr.(p.analysis_type{at}).powspctrm = TFR.LU_I.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-    TFR.LC_I_mirr.(p.analysis_type{at}).powspctrm = TFR.LC_I.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-
-    cfgs            = [];
-    cfgs.parameter  = 'powspctrm';
-    TFR.U_I.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RU_I.(p.analysis_type{1}),TFR.LU_I_mirr.(p.analysis_type{1})); % ERASEME: there was an error here apeenof TFR.RU with TFR.LU instead of TFR.LUmirr
-    TFR.C_I.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RC_I.(p.analysis_type{1}),TFR.LC_I_mirr.(p.analysis_type{1})); %SAME
-
-    TFR.LU_unI_mirr      = TFR.LU_unI;
-    TFR.LC_unI_mirr      = TFR.LC_unI;
-    TFR.LU_unI_mirr.(p.analysis_type{at}).powspctrm = TFR.LU_unI.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-    TFR.LC_unI_mirr.(p.analysis_type{at}).powspctrm = TFR.LC_unI.(p.analysis_type{at}).powspctrm(:,mirindx,:,:);
-
-    TFR.U_unI.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RU_unI.(p.analysis_type{1}),TFR.LU_unI_mirr.(p.analysis_type{1})); % ERASEME: there was an error here apeenof TFR.RU with TFR.LU instead of TFR.LUmirr
-    TFR.C_unI.(p.analysis_type{1})           = ft_appendfreq(cfgs, TFR.RC_unI.(p.analysis_type{1}),TFR.LC_unI_mirr.(p.analysis_type{1})); %SAME
-
-    fieldstoav = fields(TFR);
-    for f = 1:length(fieldstoav)
-        TFRav.(fieldstoav{f}).(p.analysis_type{1}) = ft_freqdescriptives([], TFR.(fieldstoav{f}).(p.analysis_type{1}));
-    end
-    mkdir([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/'])
+%     mirindx         = mirrindex(TFR.LU_I.(p.analysis_type{1}).label,[cfg_eeg.expfolder '/channels/mirror_chans']); 
+%    
+%     fieldstoav = fields(TFR);
+%     for f = 1:length(fieldstoav)
+%         TFRav.(fieldstoav{f}).(p.analysis_type{1}) = ft_freqdescriptives([], TFR.(fieldstoav{f}).(p.analysis_type{1}));
+%     end
+TFRav = TFR;
+    if ~isdir([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/']);mkdir([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/']);end
     save([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg','p')
     save([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/Nall'],'N_allSubj','fieldstoav')
-    %     save([cfg_eeg.analysisfolder cfg_eeg.analysisname '/imcoh/' cfg_eeg.sujid '_imcoh_stim_' p.analysis_type{at}],'imcoh','cfg_eeg','p')
-%     save(['/Users/jossando/trabajo/E283/analysis/' cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg','p')
-s=s+1;
+   s=s+1;
 end
 
 %%
@@ -120,11 +109,11 @@ end
 clear
 E283_params
 at                  = 1;
-p.analysisname = 'stimlockTFRgamma';
+
 for b = 1%:2
     p.analysis_type     = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
     cfgr                = [];
-    p.bsl               = [-.550 -.300];  
+    p.bsl               = [-2 -1.5];  
     if b==1
         cfgr.baseline       = p.bsl;
         cfgr.baselinetype   = 'db';
@@ -137,14 +126,18 @@ for b = 1%:2
     % MACpath = '/Volumes/nibaldo/trabajo/E283/';
     for tk = p.subj; % subject number
         if ismac    
-            cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname',p.analysisname,'expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
+            cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','preT_TFRwavlong','expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
         else
-            cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname',p.analysisname);
+            cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','preT_TFRwavlong');
         end
         load([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav')
         fTFR    = fields(TFRav);
         for ff=1:length(fTFR)
-            faux(s,ff) = ft_freqbaseline(cfgr,TFRav.(fTFR{ff}).(p.analysis_type{1}));
+            auxf = ft_freqbaseline(cfgr,TFRav.(fTFR{ff}).(p.analysis_type{1}));
+            if ~isfield(auxf,'elec')
+                auxf.elec = faux(s-1,ff).elec;
+            end
+            faux(s,ff) =orderfields(auxf);
         end
         s=s+1;
     end
@@ -159,16 +152,15 @@ for b = 1%:2
     end
 
 %     mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.expfolder '/channels/mirror_chans']); 
-  mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
-  
-    GA.U_Ici             = GA.U_I;
-    GA.U_Ici.powspctrm   = GA.U_I.powspctrm-GA.U_I.powspctrm(:,mirindx,:,:);
-    GA.U_unIci           = GA.U_unI;
-    GA.U_unIci.powspctrm = GA.U_unI.powspctrm-GA.U_unI.powspctrm(:,mirindx,:,:);
-    GA.C_Ici             = GA.C_I;
-    GA.C_Ici.powspctrm   = GA.C_I.powspctrm-GA.C_I.powspctrm(:,mirindx,:,:);
-    GA.C_unIci           = GA.C_unI;
-    GA.C_unIci.powspctrm = GA.C_unI.powspctrm-GA.C_unI.powspctrm(:,mirindx,:,:);
+% 
+%     GA.U_Ici             = GA.U_I;
+%     GA.U_Ici.powspctrm   = GA.U_I.powspctrm-GA.U_I.powspctrm(:,mirindx,:,:);
+%     GA.U_unIci           = GA.U_unI;
+%     GA.U_unIci.powspctrm = GA.U_unI.powspctrm-GA.U_unI.powspctrm(:,mirindx,:,:);
+%     GA.C_Ici             = GA.C_I;
+%     GA.C_Ici.powspctrm   = GA.C_I.powspctrm-GA.C_I.powspctrm(:,mirindx,:,:);
+%     GA.C_unIci           = GA.C_unI;
+%     GA.C_unIci.powspctrm = GA.C_unI.powspctrm-GA.C_unI.powspctrm(:,mirindx,:,:);
     if b==1
         GAbsl = GA;
     else
@@ -179,22 +171,12 @@ end
 %%
 cfgs            = [];
 cfgs.parameter  = 'powspctrm';
+
+
 cfgs.operation  = 'subtract';
 
- GAbsl.diffUIvsunI       = ft_math(cfgs,GAbsl.U_I,GAbsl.U_unI);
- GAbsl.diffCIvsunI       = ft_math(cfgs,GAbsl.C_I,GAbsl.C_unI);
-
- GAbsl.diffUIvsunIci       = ft_math(cfgs,GAbsl.U_Ici,GAbsl.U_unIci);
- GAbsl.diffCIvsunIci       = ft_math(cfgs,GAbsl.C_Ici,GAbsl.C_unIci);
-
- GAbsl.diffUCI       = ft_math(cfgs,GAbsl.U_I,GAbsl.C_I);
- GAbsl.diffUCunI       = ft_math(cfgs,GAbsl.U_unI,GAbsl.C_unI);
- 
- GAbsl.diffUCIci       = ft_math(cfgs,GAbsl.U_Ici,GAbsl.C_Ici);
- GAbsl.diffUCunIci       = ft_math(cfgs,GAbsl.U_unIci,GAbsl.C_unIci);
- GAbsl.diffUC_IvsUni      = ft_math(cfgs,GAbsl.diffUCI,GAbsl.diffUCunI);
- GAbsl.diffUC_IvsUnici      = ft_math(cfgs,GAbsl.diffUCIci,GAbsl.diffUCunIci);
-% difffreq2.mask   = statUC.mask;
+ GAbsl.diff       = ft_math(cfgs,GAbsl.fixpreT0,GAbsl.fixpreT3);
+%   difffreq2.mask   = statUC.mask;
 %%
 load(cfg_eeg.chanfile)
 cfgp                = [];
@@ -207,13 +189,13 @@ cfgp.interactive    = 'yes';
 % cfgp.baseline       = p.bsl;
 % cfgp.baselinetype   = 'db';
 % cfgp.ylim           = [0 40];
-% cfgp.xlim           = [-.75 1.25];
-% cfgp.zlim           = [-1 1];
+%  cfgp.xlim           = [-.2 .4];
+%  cfgp.zlim           = [-.5 .5];
 %   cfgp.maskparameter  = 'mask';
 %   cfgp.maskalpha      = 1;
 % cfgp.parameter      = 'stat';
 
-  data = GAbsl.diffUCIci
+  data = GAbsl.diff;
 %      data =GAbsl.C_Ici;
 % %  data.mask = statUCIci.mask;
 figure,ft_multiplotTFR(cfgp,data)
@@ -239,18 +221,18 @@ for ch = 1:length(chnstoPlot)
         colormap(cmap),
         vline(0,'k')
         figsize     = [8 4];
-        doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',...
+        doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',...
             [datestr(now,'ddmmyy') '_TF_' datatoplot{ff} '_' strjoin('_',cfgp.channel)],figsize,1)
     end
 end
 cfgp.channel        = {'C3','CP3'};
 figure,ft_singleplotTFR(cfgp,GAbsl.U_Ici),colormap(cmap),vline(0,'k')
 figsize     = [8 4];
-doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_TF_U_Ici_' strjoin('_',cfgp.channel)],figsize,1)
+doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_TF_U_Ici_' strjoin('_',cfgp.channel)],figsize,1)
 figure,ft_singleplotTFR(cfgp,GAbsl.C_Ici),colormap(cmap),vline(0,'k')
-doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_TF_C_Ici_' strjoin('_',cfgp.channel)],figsize,1)
+doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_TF_C_Ici_' strjoin('_',cfgp.channel)],figsize,1)
 figure,ft_singleplotTFR(cfgp,GAbsl.diffUCIci),colormap(cmap),vline(0,'k')
-doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_TF_diffUC_Ici_' strjoin('_',cfgp.channel)],figsize,1)
+doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_TF_diffUC_Ici_' strjoin('_',cfgp.channel)],figsize,1)
 
 cfgp.channel        = {'P5','P7','PO7'};
 figure,ft_singleplotTFR(cfgp,GAbsl.U_Ici),colormap(cmap),vline(0,'k')
@@ -267,23 +249,23 @@ figure,ft_singleplotTFR(cfgp,GAbsl.C_unIci),colormap(cmap),vline(0,'k')
 figure,ft_singleplotTFR(cfgp,GAbsl.diffUCunIci),colormap(cmap),vline(0,'k')
 %%
 % Comparisons stat
-% chtoplot = find(ismember(difffreq2.label,{'P5', 'P7', 'PO7'}));
+chtoplot = find(ismember(difffreq2.label,{'P5', 'P7', 'PO7'}));
 load(cfg_eeg.chanfile)
 statUCIci       = freqpermWS(GAbsl.U_Ici,GAbsl.C_Ici,elec,1000);
 statUCunIci     = freqpermWS(GAbsl.U_unIci,GAbsl.C_unIci,elec,1000);
-statUCIvsUnici  = freqpermWS(GAbsl.diffUCIci,GAbsl.diffUCunIci,elec,1000);
-save([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/stat_hann_' datestr(now,'ddmmyy')],'statUCIci','statUCunIci','statUCIvsUnici')
+statUCIvsUnici  = freqpermWS(difffreq1,difffreq2,elec,1000);
+save([cfg_eeg.analysisfolder cfg_eeg.analysisname '/tfr/stat_hann_' datestr(now,'ddmmyy')],'statUCIci','statUCunIci','statUCIvsUnici')
 % statUC = freqpermWS(GAbsl.U_I,GAbsl.C_I,elec,1000)
 % statBsl = freqpermBSL(GAnobsl.U_I,p.bsl,elec,500)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % TOPOPLOT SERIES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-load('stat_hann_220218.mat')
+load('stat_hann_160118.mat')
 clim            = [-2.5 2.5];
 plotinterval    = [-.1 .8 .05];
-bands           = [8 16;15 27;20 27;36 40];
-bandnames       = {'alpha','beta','hbeta','lgamma'};
+bands           = [8 16;15 27];
+bandnames       = {'alpha','beta'};
 datatoplot      = {'U_Ici','C_Ici','diffUCIci','U_unIci','C_unIci','diffUCunIci','diffUC_IvsUnici'};
 stattoplot      = {[],[],'statUCIci',[],[],'statUCunIci','statUCIvsUnici'};
 setAbsoluteFigureSize
@@ -297,7 +279,7 @@ for b = 1:length(bandnames)
         end
        fh          = topomitlinesTFR(cfg_eeg,stat,GAbsl.(datatoplot{ff}),plotinterval,clim,bands(b,:));
          figsize     = [17.6 17.6*fh.Position(4)/fh.Position(3)];
-        doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_' datatoplot{ff} '_' bandnames{b}],figsize,1)
+        doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_' datatoplot{ff} '_' bandnames{b}],figsize,1)
     end
 end
 
@@ -337,7 +319,7 @@ for b = 1:length(bandnames)
         xlabel('Time (s)','FontSize',12)
         ylabel('Chan-mirrChan Pow','Interpreter','tex','FontSize',12)
         figsize     = [8 8*fh.Position(4)/fh.Position(3)];
-        doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_Inf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
+        doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_Inf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
     
          datatoPlot  = cat(3,squeeze(nanmean(nanmean(GAbsl.U_unIci.powspctrm(:,auxChns,freqs,:),2),3)),...
             squeeze(nanmean(nanmean(GAbsl.C_unIci.powspctrm(:,auxChns,freqs,:),2),3)),...
@@ -348,7 +330,7 @@ for b = 1:length(bandnames)
         xlabel('Time (s)','FontSize',12)
         ylabel('Chan-mirrChan Pow','Interpreter','tex','FontSize',12)
         figsize     = [8 8*fh.Position(4)/fh.Position(3)];
-        doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_unInf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
+        doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_unInf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
     
 	end
 end
@@ -356,7 +338,7 @@ for ch = 1:length(chnstoPlot)
     figure
     tp = topo_markCh(cfg_eeg,chnstoPlot{ch});
     tightfig
-    doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',['Channs_' strjoin('_',chnstoPlot{ch})],[2 2],1)
+    doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',['Channs_' strjoin('_',chnstoPlot{ch})],[2 2],1)
 end
     
   
