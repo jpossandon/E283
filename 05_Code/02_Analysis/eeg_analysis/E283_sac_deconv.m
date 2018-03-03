@@ -3,7 +3,7 @@
 % eeglab
 clear
 E283_params                                 % basic experimental parameters               % 
-p.analysisname  = 'TL_dc_Stim_mirr';
+p.analysisname  = 'TL_dc_Stim_500';
 %%
 % subject configuration and data
  
@@ -17,6 +17,7 @@ for tk = p.subj
     tk
 %  for tk = p.subj;
 % tk = str2num(getenv('SGE_TASK_ID'));
+try
     if ismac    
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),...
             'expfolder','/Users/jossando/trabajo/E283/'); % this is just to being able to do analysis at work and with my laptop
@@ -35,7 +36,7 @@ for tk = p.subj
    
     % get relevant epochevents
      load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])            % eyedata               
-    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'&origstart','<900';'&latposStim','>-1000'},...
+    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'&origstart','<100';'&latposStim','>-1000'},...
                                 [800 100],{-1,2,'origstart','>0'}); 
     epochevents             = [];
     epochevents.latency     = events.start;                       % fixation start, here the important thing is the ini pos
@@ -84,7 +85,7 @@ for tk = p.subj
     epochevents.pydiff          = [epochevents.pydiff,nan(1,length(events.value))];  
     epochevents.orderposStim    = [epochevents.orderposStim,nan(1,length(events.value))];  
     % getting the data in EEGlab format
-    [EEG,winrej]            = getDataDeconv(cfg_eeg,epochevents,100); 
+    [EEG,winrej]            = getDataDeconv(cfg_eeg,epochevents,500); 
     mirindx                 = mirrindex({EEG.chanlocs.labels},[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
              
     if any(strfind(p.analysisname,'CI'))
@@ -105,16 +106,16 @@ for tk = p.subj
     end
     % deconvolution design
     cfgDesign           = [];
-%     cfgDesign.eventtypes= {'sac','image','stim'};
-%     cfgDesign.formula   = {'y~pxdiff+pydiff+pxend+pyend','y~1','y~cat(cross)*cat(inst)*cat(side)'};
-%     model               = 'Sxydxyend_IM_STsci';
+%      cfgDesign.eventtypes= {'sac','image','stim'};
+%      cfgDesign.formula   = {'y~pxdiff+pydiff+pxend+pyend','y~1','y~cross*inst*side'};
+%      model               = 'Sxydxyend_IM_STsci';
     cfgDesign.eventtypes= {'image','stim'};
     cfgDesign.formula   = {'y~1','y~cross*inst*side'};
     model               = 'IM_STsci';
     
     EEG                 = dc_designmat(EEG,cfgDesign);
     cfgTexp             = [];
-    cfgTexp.timelimits  = [-.5,1];tic
+    cfgTexp.timelimits  = [-.5,.5];tic
     EEG                 = dc_timeexpandDesignmat(EEG,cfgTexp);toc
     EEG                 = dc_continuousArtifactExclude(EEG,struct('winrej',winrej,'zerodata',0));
     EEG                 = dc_glmfit(EEG);
@@ -124,6 +125,9 @@ for tk = p.subj
     mkdir(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm'))
     save(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
     clear unfold
+catch
+    tk
+end
 end 
 %%
 % %2nd level analysis
@@ -137,19 +141,22 @@ end
  end
     
 stimB = [];
-model               = 'Sxydxyend_IM_STsci';
-model               = 'IM_STsci';
+% model               = 'Sxydxyend_IM_STsci';
+ model               = 'IM_STsci';
 bslcor    = [];
 for tk = p.subj
      cfg_eeg             = eeg_etParams_E283(cfg_eeg,'sujid',sprintf('s%02dvs',tk));
-    load(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
+    try
+     load(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
     if ~isempty(bslcor) 
         stimB = cat(4,stimB,permute(unfold.beta-...
             repmat(mean(unfold.beta(:,find(unfold.times>bslcor(1) & unfold.times<bslcor(2)),:),2),1,size(unfold.beta,2),1),[1,3,2]));
     else
         stimB = cat(4,stimB,permute(unfold.beta(:,:,:),[1,3,2]));
     end
-%     end
+    catch
+        tk
+      end
 end
 %
 load(cfg_eeg.chanfile)
@@ -172,7 +179,7 @@ else
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy')]);
 end
 mkdir(pathfig)
-plotinterval = [-.3  .2 .02;.2 .7 .02];
+plotinterval = [-.25  .0 .01;0 .25 .01];
 setAbsoluteFigureSize
 for b=1:size(result.B,2)
     betas.dof   = 1;
@@ -190,4 +197,41 @@ for b=1:size(result.B,2)
         doimage(gcf,pathfig,'pdf',[result.coeffs{b} '_' strjoin('_',{num2str(plotinterval(pint,1)),num2str(plotinterval(pint,2))})],figsize,1)
    
     end
+end
+
+%%
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SELECTED CHANNELS WITH SUBJECT VARIANCE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% p.analysisname  = 'deconvTF';
+% cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jossando/trabajo/E283/','analysisname', p.analysisname); % this is just to being able to do analysis at work and with my laptop
+   
+load(cfg_eeg.chanlocs)
+timeLim         = [-.3 .7];
+% chnstoPlot      = {{'FC1','FCz','FC2','C1','Cz','C2','CP1','CPz','CP2'},{'O1','Oz','O2'},...
+ %    {'P5','P7','PO7'},{'P6','P8','PO8'}};
+ chnstoPlot      = {{'C3','C5'},{'C4','C6'},{'P5','P7','PO7'},{'P6','P8','PO8'}};
+lineColors      = cbrewer('qual','Set1',9);%[134 16 9;22 79 134;11 93 24]/255;
+Bnames        = {'stim_2_Intercept'};
+xaxis           = result.clusters(1).time;
+axLim           = [-.2 .4 -2 2];
+
+
+for ch = 1:length(chnstoPlot)
+    auxChns         = find(ismember({chanlocs.labels},chnstoPlot{ch}));
+    datatoPlot  = [];
+    for b = 1:length(Bnames)
+        ixB = strmatch(Bnames{b},result.coeffs,'exact');
+        datatoPlot  = cat(3,datatoPlot,permute(squeeze(mean(result.B(auxChns,ixB,:,:))),[2 1]));
+    end
+    lineNames   = strtok(Bnames,'_');
+%         result.clusters(ixB).mask
+%         signf        = squeeze(any(any(statUCIci.mask(auxChns,freqs,:),1),2))';
+    fh = fillPlot(datatoPlot,[],xaxis,axLim,'mean',lineColors,lineNames);
+%     fh.Name = Bnames{b};
+    xlabel('Time (s)','FontSize',12)
+    ylabel('\muV','Interpreter','tex','FontSize',12)
+    figsize     = [8 8*fh.Position(4)/fh.Position(3)];
+%     doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_Inf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
 end
