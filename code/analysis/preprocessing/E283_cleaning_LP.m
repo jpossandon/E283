@@ -2,7 +2,7 @@
 %%
 MACpath = '/Volumes/nibaldo/trabajo/E283/';
 %suj = str2num(getenv('SGE_TASK_ID'));
-for suj             = [43,44,45,46,47];
+for suj             = [43,44 ,59];
 eegfilename     = sprintf('s%02dvs',suj);
 suj             = sprintf('s%02dvs',suj);
 
