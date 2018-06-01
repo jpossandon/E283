@@ -122,6 +122,7 @@ doimage(gcf,fullfile(patheye,'figures'),...
 %%
 % revisit per lag
 figure, hold on
+
 plot(SUMMARY.lagBINS+unique(diff(SUMMARY.lagBINS(1:end-1)))/2,SUMMARY.revisitpLag./repmat(SUMMARY.nT',1,length(SUMMARY.lagBINS)),...
     'Color',[.7 .7 .7])
 plot(SUMMARY.lagBINS+unique(diff(SUMMARY.lagBINS(1:end-1)))/2,mean(SUMMARY.revisitpLag./repmat(SUMMARY.nT',1,length(SUMMARY.lagBINS))),'-',...
@@ -135,8 +136,8 @@ xlabel('Revisit lag','FontSize',12)
 ylabel('revisit pre trial','FontSize',12)
 title(sprintf('N = %d',Ns),'FontSize',12)
 tightfig
-doimage(gcf,fullfile(patheye,'figures'),...
-             'tiff',['revisitlag_' namegr],[],1)
+% doimage(gcf,fullfile(patheye,'figures'),...
+%              'tiff',['revisitlag_' namegr],[],1)
         
 
 %%

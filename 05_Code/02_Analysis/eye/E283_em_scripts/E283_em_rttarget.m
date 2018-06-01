@@ -42,8 +42,44 @@ title('M')
 caxis([100 300])
 cmap = cmocean('thermal');
 colormap(cmap)
- doimage(gcf,fullfile(patheye,'figures'),...
-             'tiff',['T1durperT2pos_' namegr],[],1)
+%  doimage(gcf,fullfile(patheye,'figures'),...
+%              'tiff',['T1durperT2pos_' namegr],[],1)
+
+%%
+%
+bins = [0:25:1250,Inf];
+cmap = cbrewer('qual','Set1',18);
+figure,hold on
+for opT = 1:10
+    auxfix = auxdat.type==1 & auxdat.orderPreT==opT& auxdat.event_order>1 & auxdat.DToTarg<1408 & auxdat.tToTarg>-5000;
+     plot(auxdat.DToTarg(auxfix),-auxdat.tToTarg(auxfix),'.','Color',cmap(opT,:),'MarkerSize',6)
+%     bihist = accumarray(ceil([-auxdat.tToTarg(auxfix)'/25,auxdat.DToTarg(auxfix)'/(posVec.pixxdeg/2)]),1,[200,62]);
+% [n,c] = hist3(ceil([-auxdat.tToTarg(auxfix)'/25,auxdat.DToTarg(auxfix)'/(posVec.pixxdeg/2)]),{0:25:5000,0:.5:31})
+% contour(c{1},c{2},n)
+end
+% axis([0 1500 0 10000])
+xlabel('Distance to target')
+ylabel('Time to target')
+%%
+% distance to target vs cumulative distance to target
+degbins = 0:.5:30;
+% for ss = 1:length(subjects)
+
+%     auxdat     = struct_select(data,{'subject','type'},{['==' num2str(subjects(ss))],'==1'},2);
+    auxdat     = struct_select(data,{'type'},{'==1'},2);
+    auxDtotarg = auxdat.DToTarg/posVec.pixxdeg;
+    [n,bins] = histc(auxDtotarg,degbins);
+    for dbi = 1:length(degbins)
+        auxdist = auxdat.orderPreT(find(bins==dbi));
+        auxdist(isnan(auxdist)) = [];
+        resDtotarg(:,dbi) = accumarray(auxdist'+1,1,[63,1])./length(auxdist);
+    end
+    figure,imagesc(degbins+.25,0:62,log10(resDtotarg))
+    axis xy
+     axis([0 30 0 30])
+    xlabel('Distance to target (degree)')
+    ylabel('Order pre Target')
+% end
 %%
 % fixation duration wit the respect to the relationship between the two
 % fixations previous target fixation in respect to their rleatives angles
