@@ -47,7 +47,7 @@ for tk =p.subj
     epochevents.type        = cell(1,length(events.start));
 %     epochevents.prefixdur   = events.prefixdur; 
   
-   
+   %ADD NEXT SACCADE DURATION
       epochevents.type(events.type==1 & events.orderPreT==0) = repmat({'fixpreT0'},1,sum(events.type==1 & events.orderPreT==0));
       epochevents.type(events.type==1 & events.orderPreT==1 & events.onTarg)    = repmat({'fixpreT1onTarg'},1,sum(events.type==1  & events.orderPreT==1 & events.onTarg));
       epochevents.type(events.type==1 & events.orderPreT==1 & ~events.onTarg)   = repmat({'fixpreT1'},1,sum(events.type==1  & events.orderPreT==1 & ~events.onTarg));
@@ -62,7 +62,8 @@ for tk =p.subj
     epochevents.pxend       = (events.posendx-960)/45;            
     epochevents.pyend       = (events.posendy-540)/45;
     epochevents.pxdiff      = epochevents.pxend-epochevents.pxini;  
-    epochevents.pydiff      = epochevents.pyend-epochevents.pyini; 
+    epochevents.pydiff      = epochevents.pyend-epochevents.pyini;
+    events.angle(events.angle<0) = 360+events.angle(events.angle<0);           % transform angles to 0-360
     epochevents.side        = nan(1,length(events.start));    
     epochevents.cross       = nan(1,length(events.start));    
     epochevents.inst        = nan(1,length(events.start)); 
@@ -213,7 +214,7 @@ splavg = mean(stimSpl,5);
 % diffspl = mean(squeeze(stimSpl(:,:,:,3,:)-stimSpl(:,:,:,4,:)),4);
 cmap = cbrewer('qual','Paired',length(splmes));
 cmap = cbrewer('qual','Set1',9);
-for ch=[5]
+for ch=[4]
 figure,hold on
     for spl =1:5
         for ss = 1:length(splmes)

@@ -9,9 +9,13 @@ run('/Users/jossando/trabajo/matlab/unfold/init_unfold.m')
 else
 run('/Users/jpo/trabajo/matlab/unfold/init_unfold.m')   
 end  
+ % model               = 'S_preT_onT_T0_T1_T2_T3_pre_xdifspl_IM_STsc';
+%model = 'S_orderPrecat_xdifspl_IM_STsc_eff'; 
+ model = 'F_orderPrecat_xdifspl_IM_STsc_eff'; 
+ % model = 'F_nextto_xdifspl_IM_STsc_eff'; 
 %%
 % subject configuration and data
- 
+%  p.subj = p.subj(4:end)
   
 %p.subj              = [7,11,12,15];
 for tk =p.subj
@@ -37,7 +41,7 @@ for tk =p.subj
     % get relevant epochevents
     load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])            % eyedata   
     eyedata.events.nextToTarg = any([eyedata.events.nextToTargH;eyedata.events.nextToTargV;eyedata.events.nextToTargD]);
-    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'orderPreT','<6'},...
+    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'orderPreT','<8'},...
                                 [800 100],{-1,2,'origstart','>0';-2,1,'origstart','>0'});
     
     events.prefixdur        = nan(1,length(events.start));  
@@ -50,21 +54,18 @@ for tk =p.subj
     epochevents.dur         = events.dur; 
     epochevents.type        = cell(1,length(events.start));
     epochevents.prefixdur   = events.prefixdur; 
-  
-    epochevents.type(events.type==2 & events.orderPreT==0 & events.onTarg) = repmat({'sacpreT0onTarg'},1,sum(events.type==2 & events.orderPreT==0 & events.onTarg));
-    epochevents.type(events.type==2 & events.orderPreT==0 & ~events.onTarg) = repmat({'sacpreT0'},1,sum(events.type==2 & events.orderPreT==0 & ~events.onTarg));
-    epochevents.type(events.type==2 & events.orderPreT==1) = repmat({'sacpreT1'},1,sum(events.type==2 & events.orderPreT==1));
-    epochevents.type(events.type==2 & events.orderPreT==2) = repmat({'sacpreT2'},1,sum(events.type==2 & events.orderPreT==2));
-    epochevents.type(events.type==2 & events.orderPreT==3) = repmat({'sacpreT3'},1,sum(events.type==2 & events.orderPreT==3));
-    epochevents.type(events.type==2 & events.orderPreT>3) = repmat({'sacpre'},1,sum(events.type==2 & events.orderPreT>3));
+    epochevents.orderPreT   =  events.orderPreT;
+     epochevents.type(events.type==2 & events.orderPreT==0 & events.onTarg) = repmat({'sacpreT0onTarg'},1,sum(events.type==2 & events.orderPreT==0 & events.onTarg));
+     epochevents.type(events.type==2 & events.orderPreT==0 & ~events.onTarg) = repmat({'sacpre'},1,sum(events.type==2 & events.orderPreT==0 & ~events.onTarg));
+     epochevents.type(events.type==2 & events.orderPreT>0) = repmat({'sacpre'},1,sum(events.type==2 & events.orderPreT>0));
     
-      epochevents.type(events.type==1 & events.orderPreT==0) = repmat({'fixpreT0'},1,sum(events.type==1 & events.orderPreT==0));
-      epochevents.type(events.type==1 & events.orderPreT==1 & events.onTarg)    = repmat({'fixpreT1onTarg'},1,sum(events.type==1  & events.orderPreT==1 & events.onTarg));
-      epochevents.type(events.type==1 & events.orderPreT==1 & ~events.onTarg)   = repmat({'fixpreT1'},1,sum(events.type==1  & events.orderPreT==1 & ~events.onTarg));
-      epochevents.type(events.type==1 & events.orderPreT==2)   = repmat({'fixpreT2'},1,sum(events.type==1  & events.orderPreT==2));
-      epochevents.type(events.type==1 & events.orderPreT==3)   = repmat({'fixpreT3'},1,sum(events.type==1  & events.orderPreT==3 ));
-     epochevents.type(events.type==1 & events.orderPreT>3)   = repmat({'fixpre'},1,sum(events.type==1  & events.orderPreT>3));
+      epochevents.type(events.type==1 & (events.orderPreT==0 | (events.orderPreT==1 & events.onTarg)) ) = repmat({'fixpreT0T1onTarg'},1,sum(events.type==1 & (events.orderPreT==0 | (events.orderPreT==1 & events.onTarg)) ));
+   %   epochevents.type(events.type==1 & events.orderPreT==1 & events.onTarg)    = repmat({'fixpreT1onTarg'},1,sum(events.type==1  & events.orderPreT==1 & events.onTarg));
+      epochevents.type(events.type==1 & events.orderPreT==1 & ~events.onTarg)    = repmat({'fixpreT1'},1,sum(events.type==1 & events.orderPreT==1 & ~events.onTarg));
+      
+      epochevents.type(events.type==1 & (events.orderPreT>1))   = repmat({'fixpre'},1,sum(events.type==1 & (events.orderPreT>1)));
     
+      
 
     epochevents.orderposStim= events.orderposStim;
     epochevents.pxini       = (events.posinix-960)/45;            
@@ -73,12 +74,33 @@ for tk =p.subj
     epochevents.pyend       = (events.posendy-540)/45;
     epochevents.pxdiff      = epochevents.pxend-epochevents.pxini;  
     epochevents.pydiff      = epochevents.pyend-epochevents.pyini; 
+    epochevents.pxdiff(2:2:end)  = epochevents.pxdiff(1:2:end); 
+    epochevents.pydiff(2:2:end)  = epochevents.pydiff(1:2:end); 
+    epochevents.dirtotarg(epochevents.pxdiff>0) = 1;
+    epochevents.dirtotarg(epochevents.pxdiff<0) = 2;
+     epochevents.dirtotarg(2:2:end-2)  = epochevents.dirtotarg(3:2:end); 
+     
+    events.angle(events.angle<0) = 360+events.angle(events.angle<0);           % transform angles to 0-360
+    epochevents.angle       = events.angle;
+    epochevents.amp       = events.amp;
     epochevents.side        = nan(1,length(events.start));    
     epochevents.cross       = nan(1,length(events.start));    
     epochevents.inst        = nan(1,length(events.start)); 
-     epochevents = struct_elim(epochevents,[2:2:length(epochevents.type)],2);
  
+    if strcmp(model,'S_orderPrecat_xdifspl_IM_STsc') || strcmp(model,'S_orderPrecat_xdifspl_IM_STsc_eff') || strcmp(model,'S_preT_onT_T0_T1_T2_T3_pre_xdifspl_IM_STsc')
+         epochevents = struct_elim(epochevents,[2:2:length(epochevents.type)],2);
+         if any(epochevents.orderPreT==8)
+            epochevents = struct_elim(epochevents,find(epochevents.orderPreT==8),2);
+         end
+    end
+    if strcmp(model,'F_orderPrecat_xdifspl_IM_STsc') || strcmp(model,'F_orderPrecat_xdifspl_IM_STsc_eff')
+        epochevents = struct_elim(epochevents,[1:2:length(epochevents.type)],2);
+         if any(epochevents.orderPreT==8)
+            epochevents = struct_elim(epochevents,find(epochevents.orderPreT==8),2);
+         end
+    end
     
+   
     [trl,events]  = define_event(cfg_eeg,eyedata,'ETtrigger',{'value','>0'},[1500 900]);
     events                  = struct_elim(events,find(~ismember(events.value,[1:6,9,10,13,14,96])),2,0);
     epochevents.latency     = [epochevents.latency,events.time];
@@ -107,7 +129,11 @@ for tk =p.subj
     epochevents.pxdiff      = [epochevents.pxdiff,nan(1,length(events.value))];  
     epochevents.pydiff      = [epochevents.pydiff,nan(1,length(events.value))];  
     epochevents.prefixdur      = [epochevents.prefixdur ,nan(1,length(events.value))];  
-    epochevents.orderposStim= [epochevents.orderposStim,nan(1,length(events.value))];  
+    epochevents.orderposStim= [epochevents.orderposStim,nan(1,length(events.value))];
+    epochevents.angle       = [epochevents.angle,nan(1,length(events.value))];
+         epochevents.orderPreT        = [epochevents.orderPreT nan(1,length(events.value))];
+     epochevents.amp       = [epochevents.amp,nan(1,length(events.value))];
+   epochevents.dirtotarg       = [epochevents.dirtotarg,nan(1,length(events.value))];
     % getting the data in EEGlab format
     [EEG,winrej] = getDataDeconv(cfg_eeg,epochevents,200); 
     EEG = pop_eegfiltnew(EEG, [],45,300);
@@ -132,32 +158,43 @@ for tk =p.subj
     % deconvolution design
     cfgDesign           = [];
 
-    cfgDesign.eventtypes = {'sacpreT0onTarg','sacpreT0',...
+    if strcmp(model,'S_preT_onT_T0_T1_T2_T3_pre_xdifspl_IM_STsc')
+        cfgDesign.eventtypes = {'sacpreT0onTarg','sacpreT0',...
                             'sacpreT1','sacpreT2','sacpreT3',...
                             'sacpre','image','stim'};
-%                             'fixpreT0','fixpreT1onTarg',...
-%                              'fixpreT1','fixpreT2','fixpreT3',...
-%                              'fixpre',...
-%                               'image','stim'};
 
-    cfgDesign.formula   = {'y ~pxdiff+pxend+spl(prefixdur,10)','y ~pxdiff+pxend+spl(prefixdur,10)',...
-                            'y ~pxdiff+pxend+spl(prefixdur,10)','y ~pxdiff+pxend+spl(prefixdur,10)','y ~pxdiff+pxend+spl(prefixdur,10)',...
-                            'y ~pxdiff+pxend+spl(prefixdur,10)', 'y~1','y~cross*inst*side'};
-%                               'y ~pxini','y ~pxini',...
-%                              'y ~pxini','y ~pxini','y ~pxini',...
-%                              'y ~pxini',...
-%                              'y~1','y~cross*inst*side'};
+        cfgDesign.formula   = {'y ~1+spl(pxdiff,10)+spl(pydiff,10)','y ~1+spl(pxdiff,10)+spl(pydiff,10)',...
+                            'y ~1+spl(pxdiff,10)+spl(pydiff,10)','y ~1+spl(pxdiff,10)+spl(pydiff,10)','y ~1+spl(pxdiff,10)+spl(pydiff,10)',...
+                            'y ~1+spl(pxdiff,10)+spl(pydiff,10)', 'y~1','y~cross*inst*side'};
+    end
 
-    model               = 'S_preT_onT_T0_T1_T2_T3_xdif_xend_durspl__IM_STsc';
+     if strcmp(model,'F_orderPrecat_xdifspl_IM_STsc') || strcmp(model,'F_orderPrecat_xdifspl_IM_STsc_eff')
+        cfgDesign.eventtypes = {'fixpreT0T1onTarg','fixpreT1','fixpre','image','stim'};
+
+        cfgDesign.formula   = {'y ~1+cat(orderPreT)+spl(pxdiff,10)+spl(pydiff,10)','y ~1+cat(dirtotarg)+spl(pxdiff,10)+spl(pydiff,10)','y ~1+cat(orderPreT)+cat(dirtotarg)+spl(pxdiff,10)+spl(pydiff,10)','y~1','y~cross*inst*side'};
+        if strcmp(model,'F_orderPrecat_xdifspl_IM_STsc_eff')
+            cfgDesign.codingschema = 'effects';
+        end
+     end
+  
+     if strcmp(model,'S_orderPrecat_xdifspl_IM_STsc') || strcmp(model,'S_orderPrecat_xdifspl_IM_STsc_eff')
+        cfgDesign.eventtypes = {'sacpreT0onTarg','sacpre','image','stim'};
+
+        cfgDesign.formula   = {'y ~1+spl(pxdiff,10)+spl(pydiff,10)','y ~1+cat(orderPreT)+spl(pxdiff,10)+spl(pydiff,10)','y~1','y~cross*inst*side'};
+        if strcmp(model,'S_orderPrecat_xdifspl_IM_STsc_eff')
+            cfgDesign.codingschema = 'effects';
+        end
+     end
+     
 % model               = 'test';
-    EEG                 = dc_designmat(EEG,cfgDesign);
+    EEG                 = uf_designmat(EEG,cfgDesign);
     cfgTexp             = [];
     cfgTexp.timelimits  = [-1,1];tic
-    EEG                 = dc_timeexpandDesignmat(EEG,cfgTexp);toc
-    EEG                 = dc_continuousArtifactExclude(EEG,struct('winrej',winrej,'zerodata',0));
-    EEG                 = dc_glmfit(EEG);
+    EEG                 = uf_timeexpandDesignmat(EEG,cfgTexp);toc
+    EEG                 = uf_continuousArtifactExclude(EEG,struct('winrej',winrej));
+    EEG                 = uf_glmfit(EEG);
  
-    unfold              = dc_beta2unfold(EEG);
+    unfold              = uf_condense(EEG);
 
       mkdir(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm'))
       save(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
@@ -174,10 +211,12 @@ end
     
 stimB = [];
 
-   model               = 'S_preT_onT_T0_T1_T2_T3_xdif_xend_durspl__IM_STsc';
-bslcor    = [];
-stimSpl = [];
-splmes =   linspace(120,260,8);
+%  model               = 'S_preT_onT_T0_T1_T2_T3_pre_xdifspl_IM_STsc';
+bslcor      = [];
+stimSpl     = [];
+stimBspl    = [];
+ufpredict   = [];
+
 for tk = p.subj
      cfg_eeg             = eeg_etParams_E283(cfg_eeg,'sujid',sprintf('s%02dvs',tk));
     load(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
@@ -185,148 +224,89 @@ for tk = p.subj
 %         mirindx         = mirrindex({unfold.chanlocs.labels},[cfg_eeg.expfolder '/channels/mirror_chans']); 
 %         stimB = cat(4,stimB,permute(unfold.beta-unfold.beta(mirindx ,:,:),[1,3,2]));
 %     else
+    if  strcmp(model,'S_preT_onT_T0_T1_T2_T3_pre_xdifspl_IM_STsc') 
+        pxdM        = 10;   pxd_pred    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
+        pydM        = 10;   pyd_pred    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
+         
+        ufpredict               = uf_predictContinuous(unfold,'predictAt',{{'pxdiff',pxd_pred},{'pydiff',pyd_pred},...
+            {'2_pxdiff',pxd_pred},{'2_pydiff',pyd_pred},{'3_pxdiff',pxd_pred},{'3_pydiff',pyd_pred},{'4_pxdiff',pxd_pred},{'4_pydiff',pyd_pred},...
+            {'5_pxdiff',pxd_pred},{'5_pydiff',pyd_pred},{'6_pxdiff',pxd_pred},{'6_pydiff',pyd_pred}});
+     
+    end
+    if  strcmp(model,'S_orderPrecat_xdifspl_IM_STsc') || strcmp(model,'S_orderPrecat_xdifspl_IM_STsc_eff')
+        pxdM        = 2;   pxd_pred0    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
+        pydM        = 2;   pyd_pred0    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
+        pxdM        = 10;   pxd_pred    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
+        pydM        = 10;   pyd_pred    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
+         
+        ufpredict               = uf_predictContinuous(unfold,'predictAt',{{'pxdiff',pxd_pred0},{'pydiff',pyd_pred0},...
+            {'2_pxdiff',pxd_pred},{'2_pydiff',pyd_pred}});
+     
+    end
+    if  strcmp(model,'F_orderPrecat_xdifspl_IM_STsc_eff') 
+        pxdM        = 2;   pxd_pred0    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
+        pydM        = 2;   pyd_pred0    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
+        pxdM        = 10;   pxd_pred    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
+        pydM        = 10;   pyd_pred    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
+         
+        ufpredict               = uf_predictContinuous(unfold,'predictAt',{{'pxdiff',pxd_pred0},{'pydiff',pyd_pred0},...
+            {'2_pxdiff',pxd_pred},{'2_pydiff',pyd_pred},{'3_pxdiff',pxd_pred},{'3_pydiff',pyd_pred}});
+     
+    end
+       % remove splines from coefficients estimates
+     if strcmp(model,'S_preT_onT_T0_T1_T2_T3_pre_xdifspl_IM_STsc') ||  strcmp(model,'S_orderPrecat_xdifspl_IM_STsc') || strcmp(model,'F_orderPrecat_xdifspl_IM_STsc_eff') || strcmp(model,'S_orderPrecat_xdifspl_IM_STsc_eff')
+        rmspl                   = strmatch('spline',{unfold.param.type});
+        unfold.beta(:,:,rmspl)  = [];
+        unfold.param(rmspl)     = [];
+        
+        rmnospl                   = setdiff(1:length(ufpredict.param),strmatch('spline',{ufpredict.param.type}));
+        ufpredict.beta(:,:,rmnospl) = [];
+        ufpredict.param(rmnospl)    = [];
+     end
     if ~isempty(bslcor) 
-        stimB = cat(4,stimB,permute(unfold.beta-...
+        stimB       = cat(4,stimB,permute(unfold.beta-...
             repmat(mean(unfold.beta(:,find(unfold.times>bslcor(1) & unfold.times<bslcor(2)),:),2),1,size(unfold.beta,2),1),[1,3,2]));
+        if ~isempty(ufpredict)
+            stimBspl    = cat(4,stimBspl,permute(ufpredict.beta-...
+                repmat(mean(ufpredict.beta(:,find(ufpredict.times>bslcor(1) & ufpredict.times<bslcor(2)),:),2),1,size(ufpredict.beta,2),1),[1,3,2]));
+        end
     else
         stimB = cat(4,stimB,permute(unfold.beta(:,:,:),[1,3,2]));
-    end
-      for us = 2:6
-         unfold.deconv.splines{us}.name = [num2str(us) '_prefixdur'];
-      end
-      
-     splnames = {'prefixdur','2_prefixdur','3_prefixdur','4_prefixdur','5_prefixdur','6_prefixdur'};
-     
-     auxstimSpl = [];
-      for ss = 1:length(splnames)
-        cfgu.plotParam  = {splnames{ss}};
-        cfgu.pred_value = {{splnames{ss},splmes}};
-        unf             = dc_getParam(unfold,cfgu);
-        unf             = dc_addmarginal(unf);
-         auxstimSpl = cat(4, auxstimSpl,unf.beta(:,:,strmatch(splnames{ss},{unf.param.name})));
-      end
-     stimSpl = cat(5,stimSpl,auxstimSpl);
-end
-
-%%
-% SPLINES COMPARISONS
-
-% splavg = mean(stimSpl,5);
-% diffspl = mean(squeeze(stimSpl(:,:,:,3,:)-stimSpl(:,:,:,4,:)),4);
-% cmap = cbrewer('qual','Paired',length(splmes));
-% 
-% for ch=[7]
-% figure,hold on
-%     for ss = 1:length(splmes)
-%          h = plot(unf.times,squeeze(splavg(ch,:,ss,3)),'Color',cmap(ss,:));,hold on
-%          plot(unf.times,squeeze(splavg(ch,:,ss,4)),'--','Color',cmap(ss,:))
-%         plot(unf.times,squeeze(diffspl(ch,:,ss)),':','Color',cmap(ss,:))
-%     end
-%     title(unfold.chanlocs(ch).labels)
-% % set(h, {'color'}, num2cell(cmap, 2));
-% vline(splmes/1000,':k')
-% end
-% 
-splavg = mean(stimSpl,5);
-diffspl = mean(squeeze(stimSpl(:,:,:,3,:)-stimSpl(:,:,:,4,:)),4);
-cmap = cbrewer('qual','Paired',length(splmes));
-cmap = cbrewer('qual','Set1',9); cmap(6:8,:) = cmap(7:9,:);  
-for ch=[7]
-figure,hold on
-    for spl =1:6
-        for ss = 1:length(splmes)
-             h = plot(unf.times,squeeze(splavg(ch,:,ss,spl)),'Color',cmap(spl,:));,hold on
-%              plot(unf.times,squeeze(splavg(ch,:,ss,4)),'--','Color',cmap(ss,:))
-%             plot(unf.times,squeeze(diffspl(ch,:,ss)),':','Color',cmap(ss,:))
+        if ~isempty(ufpredict)
+            stimBspl    = cat(4,stimBspl,permute(ufpredict.beta(:,:,:),[1,3,2]));
         end
     end
-    title(unfold.chanlocs(ch).labels)
-% set(h, {'color'}, num2cell(cmap, 2));
-vline(-splmes/1000,':k')
+     
 end
-  ylim([-6 6])
-%%
-load(cfg_eeg.chanfile)
-result      = regmodel2ndstat(stimB,unfold.times,elec,100,'signpermT','cluster');
 
-coeffs  = strrep({unfold.param.name},':','XX');
-coeffs  = strrep(coeffs,'(','');
-coeffs  = strrep(coeffs,')','');
-coeffs = strcat([unfold.param.event]','_',coeffs');
-result.coeffs = coeffs;
-mkdir(fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'glm'))
-if ~isempty(bslcor) 
- save(fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'glm','glmALLbslcorr'),'result')
-else
-    save(fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'glm','glmALL'),'result')
-end
 %
+% run 2nd level stat and save
+E283_run2nd_save
+
 %%
+% plot betas
 if ~isempty(bslcor)
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy') '_bslcorr']);
 else
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy')]);
 end
-mkdir(pathfig)
-plotinterval = [-.3  .2 .02;.2 .7 .02];
-setAbsoluteFigureSize
-for b=1:size(result.B,2)
-    betas.dof   = 1;
-    betas.n     = size(stimB,4);
-    betas.avg   = squeeze(mean(stimB(:,b,:,:),4));
-    betas.time  = result.clusters(1).time;
-    
-    % topoplot across time according to interval with significant
-    % clusters
-    collim      =[-6*std(betas.avg(:)) 6*std(betas.avg(:))]; 
-%     collim      =[-6 6]; 
-    for pint = 1:size(plotinterval,1)
-        fh       = topomitlines(cfg_eeg,result.clusters(b),betas,plotinterval(pint,:),collim);
-        figsize  = [17.6 17.6*fh.Position(4)/fh.Position(3)];
-        doimage(gcf,pathfig,'pdf',[result.coeffs{b} '_' strjoin('_',{num2str(plotinterval(pint,1)),num2str(plotinterval(pint,2))})],figsize,1)
-   
-    end
-end
-
-%%
-setAbsoluteFigureSize
+plotBetasTopos(cfg_eeg,result,pathfig,[-.1  .6 .025],[])
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SELECTED CHANNELS WITH SUBJECT VARIANCE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % p.analysisname  = 'deconvTF';
 cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jossando/trabajo/E283/','analysisname', p.analysisname); % this is just to being able to do analysis at work and with my laptop
-   
-load(cfg_eeg.chanlocs)
-timeLim         = [-.3 .7];
-chnstoPlot      = {{'Cz','CPz'},{'Pz','POz'},{'O1','Oz','O2'},...
-    {'P5','P7','PO7'},{'P6','P8','PO8'},{'C3','CP3'}};
-lineColors      = cbrewer('qual','Set1',9);%[134 16 9;22 79 134;11 93 24]/255;
-  Bnames        = {'sacpreT0onTarg_Intercept','sacpreT0_2_Intercept',...
-                              'sacpreT1_3_Intercept','sacpreT2_4_Intercept','sacpreT3_5_Intercept','sacpre_6_Intercept','sacpre_6_pxdiff','image_13_Intercept','stim_14_Intercept'}
-%   Bnames        = {'fixpreT0_7_Intercept','fixpreT1onTarg_8_Intercept','fixpreT1_9_Intercept',...
-%        'fixpreT2_10_Intercept','fixpreT3_11_Intercept','fixpre_12_Intercept','fixpre_12_pxini','image_13_Intercept'};
-Bnames        = {'sacpreT0_2_Intercept','fixpreT0_7_Intercept','sacpreT1_3_Intercept','fixpreT1_9_Intercept'}
-xaxis           = result.clusters(1).time;
-axLim           = [-.7 .9 -15 15];
 
-for ch = 1:length(chnstoPlot)
-    auxChns         = find(ismember({chanlocs.labels},chnstoPlot{ch}));
-    datatoPlot  = [];
-    for b = 1:length(Bnames)
-        ixB = strmatch(Bnames{b},result.coeffs);
-        datatoPlot  = cat(3,datatoPlot,permute(squeeze(mean(result.B(auxChns,ixB,:,:))),[2 1]));
-    end
-    lineNames   = strtok(Bnames,'_');
-%         result.clusters(ixB).mask
-%         signf        = squeeze(any(any(statUCIci.mask(auxChns,freqs,:),1),2))';
-    fh = fillPlot(datatoPlot,[],xaxis,axLim,'mean',lineColors,lineNames);
-    fh.Name = strjoin(' ',chnstoPlot{ch});
-    xlabel('Time (s)','FontSize',12)
-    ylabel('\muV','Interpreter','tex','FontSize',12)
-    figsize     = [8 8*fh.Position(4)/fh.Position(3)];
-%     doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_Inf_' chnsLabel{ch} '_' bandnames{b}],figsize,1)
-end
+%chnstoPlot      = {{'Cz','CPz'},{'Pz','POz'},{'O1','Oz','O2'},...
+ %   {'P5','P7','PO7'},{'P6','P8','PO8'},{'C3','CP3'}};
+chnstoPlot      = {{'FCz','Cz','CPz'},{'O1','Oz','O2'},{'P1','Pz','P2','PO3','POz','PO4'},{'P5','P7','PO7'}};
+Bnames        = {'sacpre_2_Intercept','sacpre_orderPreT_0','sacpre_orderPreT_1','sacpre_orderPreT_2','sacpre_orderPreT_3','sacpre_orderPreT_4','sacpre_orderPreT_5','sacpreT0onTarg_Intercept'}
+%  Bnames        = {'fixpreT0_Intercept','fixpre_3_Intercept','fixpre_orderPreT_1','fixpre_orderPreT_2','fixpre_orderPreT_3','fixpre_orderPreT_4','fixpre_orderPreT_5','fixpre_orderPreT_6'}
+axLim           = [-1 .9 -2 5];
+plotBetasChannels(cfg_eeg,result,chnstoPlot,Bnames,pathfig,axLim,'preTarget')
+
+
 %%
 for ch = 1:length(chnstoPlot)
     figure

@@ -5,9 +5,9 @@
 clear
 MACpath = '/Volumes/nibaldo/trabajo/E283/';
 MACpath = '/Users/jossando/trabajo/E283/';
-oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31,41:47,50,51,52,53,54,55,56,57,58,59,60,62,63,64,66];
+oldsubjects             = [2,4,5,6,7,8,10,11,12,13,14,15,17,18,19,22,20,21,23,24,25,26,27,28,29,31,41:47,50,51,52,53,54,55,56,57,58,59,60,62,63,64,66,65,48];
      
-addsubjects             = [68,69,71,72];
+addsubjects             = [];
 % eeg                     = [0,0,1,1];
 for s=addsubjects
     eegfilename     = sprintf('s%02dvs',s);
@@ -57,3 +57,10 @@ end
 % eyedata.marks = struct_elim(eyedata.marks,find(eyedata.marks.trial<27),2,0)
 % eyedata.samples = struct_elim(eyedata.samples,find(eyedata.samples.trial<27),2,0)
 % eyedata.events = struct_elim(eyedata.events,find(eyedata.events.trial<27),2,0)
+%
+% s65, 40 trials lost at the beginning
+% load('/Users/jossando/trabajo/E283/06_RawData/s65vs/s65vseye_original.mat')
+%  eyedata.marks = struct_elim(eyedata.marks,find(eyedata.marks.trial<41),2,0)
+%  eyedata.samples = struct_elim(eyedata.samples,find(eyedata.samples.trial<41),2,0)
+%  eyedata.events = struct_elim(eyedata.events,find(eyedata.events.trial<41),2,0)
+%  save('/Users/jossando/trabajo/E283/06_RawData/s65vs/s65vseye.mat','eyedata')

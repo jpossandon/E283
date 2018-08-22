@@ -38,7 +38,9 @@ aux20   = find(result.subject==20);
 result  =  struct_elim(result,aux20(1:26),2,0);
 aux22   = find(result.subject==22);
 result  =  struct_elim(result,aux22(1:7),2,0);
-    
+aux65   = find(result.subject==65);
+result  =  struct_elim(result,aux65(1:40),2,0);
+
 result.tpos     = zeros(1,length(result.rT));
 result.trial    = zeros(1,length(result.rT));
 for s = 1:length(subj)

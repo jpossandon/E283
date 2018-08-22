@@ -89,7 +89,7 @@ for tk = p.subj % subject number
         end
     end
     
-    mirindx         = mirrindex(imcoh.alpha.LU_I.label,[cfg_eeg.expfolder '/channels/mirror_chans']);
+    mirindx         = mirrindex(imcoh.alpha.LU_I.label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']);
     for b = 1:2
         LU_I_mirr   = imcoh.(bands{b}).LU_I;
         LC_I_mirr   = imcoh.(bands{b}).LC_I;
@@ -111,7 +111,7 @@ for tk = p.subj % subject number
         imcoh.(bands{b}).U_unI.cohspctrm  = mean(cat(3,imcoh.(bands{b}).RU_unI.cohspctrm,LU_unI_mirr.cohspctrm),3);
         imcoh.(bands{b}).C_unI.cohspctrm  = mean(cat(3,imcoh.(bands{b}).RC_unI.cohspctrm,LC_unI_mirr.cohspctrm),3);
     end
-    save([cfg_eeg.analysisfolder cfg_eeg.analysisname '/imcoh/' cfg_eeg.sujid '_imcoh_stim_' p.analysis_type{at}],'imcoh','cfg_eeg','p')
+    save([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/imcoh/' cfg_eeg.sujid '_imcoh_stim_' p.analysis_type{at}],'imcoh','cfg_eeg','p')
 %     save(['/Users/jossando/trabajo/E283/analysis/' cfg_eeg.analysisname '/tfr/' cfg_eeg.sujid '_tfr_stim_' p.analysis_type{at}],'TFRav','cfg_eeg','p')
 
 end
@@ -133,7 +133,7 @@ for tk = p.subj; % subject number
     else
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname','stimlockcoh');
     end
-    load([cfg_eeg.analysisfolder cfg_eeg.analysisname '/imcoh/' cfg_eeg.sujid '_imcoh_stim_' p.analysis_type{at}],'imcoh')
+    load([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/imcoh/' cfg_eeg.sujid '_imcoh_stim_' p.analysis_type{at}],'imcoh')
     bands               = {'alpha','beta'};
     for b = 1:2
         fTFR    = fields(imcoh.(bands{b}));
@@ -159,6 +159,7 @@ end
             GA.(bands{b}).(fTFR{ff}) = rmfield(GA.(bands{b}).(fTFR{ff}),'cohspctrm');
             coherency                = squeeze(faux(:,:,:,:,:,ff,b));
             GA.(bands{b}).(fTFR{ff}).coherency = coherency;
+            GA.(bands{b}).(fTFR{ff}).imagcoherency = imag(coherency);
             GA.(bands{b}).(fTFR{ff}).avgImagCoherency = mean(imag(coherency),4);
             
 %             anlstdCohy =(1-abs(mean(coherency,4)).^2).*atanh(abs(mean(coherency,4))).^2./abs(mean(coherency,4)).^2;
@@ -180,10 +181,10 @@ diffName   = {'LvsR_U_I','LUvsC_I','RUvsC_I','LvsR_C_I',...
     'UvsC_I','UvsC_unI'};
 for b = 1:2
     for ff = 1:length(diffName)
-        GAdiff.(bands{b}).(diffName{ff})   = GA.(bands{b}).(diffFields{ff,1});
-%         [H,P,~,STATS] = ttest(permute(GA.(bands{b}).(diffFields{ff,1}).cohspctrm,[4,1,2,3]),permute(GA.(bands{b}).(diffFields{ff,2}).cohspctrm,[4,1,2,3]));
-%         [GAdiff.(bands{b}).(diffName{ff}).H,GAdiff.(bands{b}).(diffName{ff}).p,GAdiff.(bands{b}).(diffName{ff}).t] = ...
-%             deal(squeeze(H),squeeze(P),squeeze(STATS.tstat));
+         GAdiff.(bands{b}).(diffName{ff})   = GA.(bands{b}).(diffFields{ff,1});
+         [H,P,~,STATS] = ttest(permute(GA.(bands{b}).(diffFields{ff,1}).imagcoherency,[4,1,2,3]),permute(GA.(bands{b}).(diffFields{ff,2}).imagcoherency,[4,1,2,3]));
+         [GAdiff.(bands{b}).(diffName{ff}).H,GAdiff.(bands{b}).(diffName{ff}).p,GAdiff.(bands{b}).(diffName{ff}).t] = ...
+             deal(squeeze(H),squeeze(P),squeeze(STATS.tstat));
 %            GAdiff.(bands{b}).(diffName{ff}).avgZcoherency = mean(GA.(bands{b}).(diffFields{ff,1}).coherency./...
 %                abs(GA.(bands{b}).(diffFields{ff,1}).coherency).*...
 %                atanh(abs(GA.(bands{b}).(diffFields{ff,1}).coherency))-...
@@ -191,7 +192,7 @@ for b = 1:2
 %                abs(GA.(bands{b}).(diffFields{ff,2}).coherency).*...
 %                atanh(abs(GA.(bands{b}).(diffFields{ff,2}).coherency)),4)
 
-%         GAdiff.(bands{b}).(diffName {ff}).cohspctrm = squeeze(mean(GA.(bands{b}).(diffFields{ff,1}).cohspctrm-GA.(bands{b}).(diffFields{ff,2}).cohspctrm,4));
+         GAdiff.(bands{b}).(diffName {ff}).cohspctrm = squeeze(mean(GA.(bands{b}).(diffFields{ff,1}).coherency-GA.(bands{b}).(diffFields{ff,2}).coherency,4));
         GAdiff.(bands{b}).(diffName{ff}).dimord = 'chan_chan_time';
         fprintf('\n%s %s p<0.001 = %2.4f',bands{b},diffName{ff},sum(GAdiff.(bands{b}).(diffName {ff}).p(:)<.001)./sum(~isnan(GAdiff.(bands{b}).(diffName {ff}).p(:))))
 
@@ -216,16 +217,18 @@ end
 %HACER MODELOS SEPARADOS POR SACADAS 1,2,3 AND TARGET FIXATOIN
 %%
 alfa     = .0005;
-collim   = [-.3 .3];
+collim   = [-.15 .15];
 times    = [-.2 .7 .05];
 for b = 1
     fTFR    = fields(GA.(bands{b}));
-    for ff = 9:10%1:length(fTFR)
+    for ff = 1:4%1:length(fTFR)
         auxGA   = GA.(bands{b}).(fTFR{ff});
+        auxGA.cohspctrm   = mean(GA.(bands{b}).(fTFR{ff}).imagcoherency,4 );
         auxGA.p = nan(size(auxGA.cohspctrm));
-        auxGA.p(abs(auxGA.cohspctrm)>.1) = .0001;
+        auxGA.p(abs(auxGA.cohspctrm)>.085) = .0001;
         fh = seq_cohplots(cfg_eeg,auxGA,times,collim,alfa);
         fh.Name = fTFR{ff};
+         
     end
 end
 %%
@@ -240,16 +243,16 @@ alfa     = .05;
 collim   = [-.7 .7];
 times    = [-.2 .9 .05];
 for b = 1:2
-    for ff =1:length(diffName)
-%         auxpermT = coh_cluster(cfg_eeg,GA.(bands{b}).(diffFields{ff,1}).cohspctrm,...
-%             GA.(bands{b}).(diffFields{ff,2}).cohspctrm,1000); 
-%         auxpermT.time = GA.(bands{b}).(diffFields{ff,1}).time;
-%         result.(bands{b}).(diffName{ff}) = auxpermT;
+    for ff =[1 4 9] %1:length(diffName)
+         auxpermT = coh_cluster(cfg_eeg,GA.(bands{b}).(diffFields{ff,1}).imagcoherency,...
+             GA.(bands{b}).(diffFields{ff,2}).imagcoherency,100); 
+         auxpermT.time = GA.(bands{b}).(diffFields{ff,1}).time;
+         result.(bands{b}).(diffName{ff}) = auxpermT;
         fh      = seq_cohplots(cfg_eeg,result.(bands{b}).(diffName{ff}),times,collim,alfa);
         fh.Name = diffName{ff};
         figsize     = [17.6 17.6*fh.Position(4)/fh.Position(3)];
 
-        doimage(gcf,[cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_' bands{b} '_' diffName{ff}],figsize,1)
+        doimage(gcf,[cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/figures/GA/'],'pdf',[datestr(now,'ddmmyy') '_' bands{b} '_' diffName{ff}],figsize,1)
     
     end
 %     save([cfg_eeg.analysisfolder cfg_eeg.analysisname '/imcoh/diff_stat'],'result')

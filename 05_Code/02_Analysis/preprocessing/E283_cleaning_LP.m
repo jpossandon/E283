@@ -3,7 +3,7 @@
 MACpath = '/Users/jossando/trabajo/E283/';
 % datafileStruct
 
-for suj             = [68,69,71,72];
+for suj             = [48,65];
 eegfilename     = sprintf('s%02dvs',suj);
 suj             = sprintf('s%02dvs',suj);
 if ismac    
@@ -151,9 +151,9 @@ load([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename 
 save([cfg.preprocanalysisfolder cfg.analysisname '/' cfg.sujid '/' cfg.filename cfg.clean_name],'bad','badchans','-append') % TODO: info about the cleaning parameters
 
 %%
-%        cfgvis             = eeg_etParams_E283(cfg,...
-%                                              'remove_eye',0,...
-%                                              'remove_m',0,'raw',1); 
+        cfgvis             = eeg_etParams_E283(cfg,...
+                                              'remove_eye',0,...
+                                              'remove_m',0,'raw',1); 
 %       visual_clean(cfgvis)
 %% 
 % run second definitive ICA

@@ -9,7 +9,7 @@
 clear
 pathexp = '/Users/jossando/trabajo/E283/';
 patheye = fullfile(pathexp,'07_Analysis','03_Eye');
-group   = 2;    % 1-  subject 6 to 27, 2, 28 to 59, 3 all
+group   = 2;    % 1-  subject 6 to 27, 2, 28 to 72, 3 all
 load(fullfile(patheye,'eyedata','alleyedataFULL.mat'),'data')    % info from subjects EDF files, augments with augmentinfALLdata.m 
 load(fullfile(patheye,'eyedata','allRTFULL.mat'))                    % info from subjects matlab files 
 load(fullfile(patheye,'eyedata','tgtPos.mat'))                   % position of targets on the screen

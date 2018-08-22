@@ -25,7 +25,7 @@ for tk = p.subj % subject number
     p.cfgTFR.channel            = 'all';	
     p.cfgTFR.keeptrials         = 'yes';
     p.cfgTFR.toi                = (-p.times_tflock(1):10:p.times_tflock(2))/1000;	
-    p.cfgTFR.foi                = 2.^(3:.125:7);%(2.^([3:.25:5.25]));% %6:1:40	
+    p.cfgTFR.foi                = 8:1:40;%2.^(3:.125:7);%(2.^([3:.25:5.25]));% %6:1:40	
     p.cfgTFR.method             = 'mtmconvol';%'wavelet';%%
     
     % wavelet parameters       
@@ -34,16 +34,16 @@ for tk = p.subj % subject number
 %     p.cfgTFR.width              = 4; 
     
     % single tapers
-%     p.cfgTFR.taper              = 'hanning';%'dpss';
-%     p.cfgTFR.pad                = 4;
-%     p.cfgTFR.t_ftimwin          = .250*ones(1,length(p.cfgTFR.foi));      %    single taper
+     p.cfgTFR.taper              = 'hanning';%'dpss';
+     p.cfgTFR.pad                = 4;
+     p.cfgTFR.t_ftimwin          = .300*ones(1,length(p.cfgTFR.foi));      %    single taper
 
 %    single tapers
 
-    p.cfgTFR.taper              = 'dpss';
-    p.cfgTFR.t_ftimwin          = 4./p.cfgTFR.foi;
-    p.cfgTFR.tapsmofrq          = 0.5*p.cfgTFR.foi;
-    plottp(p.cfgTFR)
+%     p.cfgTFR.taper              = 'dpss';
+%     p.cfgTFR.t_ftimwin          = 4./p.cfgTFR.foi;
+%     p.cfgTFR.tapsmofrq          = 0.5*p.cfgTFR.foi;
+%     plottp(p.cfgTFR)
 
     if ismac    
         cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),...
@@ -58,7 +58,7 @@ for tk = p.subj % subject number
                                             'EDFname',filename,...
                                             'event',[filename '.vmrk'],...
                                             'clean_name','final',...
-                                            'analysisname','stimlockTFRgamma');       % single experiment/session parameters 
+                                            'analysisname','TF_Stim_hann');       % single experiment/session parameters 
   
 %     mkdir([cfg_eeg.analysisfolder cfg_eeg.analysisname '/figures/' cfg_eeg.sujid '/'])
     load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])                         
@@ -120,7 +120,7 @@ end
 clear
 E283_params
 at                  = 1;
-p.analysisname = 'stimlockTFRgamma';
+p.analysisname = 'TF_Stim_hann';
 for b = 1%:2
     p.analysis_type     = {'ICAem'}; %'plain' / 'ICAe' / 'ICAm' / 'ICAem' 
     cfgr                = [];
@@ -136,6 +136,7 @@ for b = 1%:2
     MACpath = '/Users/jossando/trabajo/E283/';
     % MACpath = '/Volumes/nibaldo/trabajo/E283/';
     for tk = p.subj; % subject number
+        try
         if ismac    
             cfg_eeg             = eeg_etParams_E283('sujid',sprintf('s%02dvs',tk),'analysisname',p.analysisname,'expfolder',MACpath); % this is just to being able to do analysis at work and with my laptop
         else
@@ -147,6 +148,9 @@ for b = 1%:2
             faux(s,ff) = ft_freqbaseline(cfgr,TFRav.(fTFR{ff}).(p.analysis_type{1}));
         end
         s=s+1;
+        catch
+            sprintf('no data for suj %d',tk)
+        end
     end
     cfgga.keepindividual = 'yes';
     for ff=1:length(fTFR)
@@ -161,6 +165,16 @@ for b = 1%:2
 %     mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.expfolder '/channels/mirror_chans']); 
   mirindx         = mirrindex(GA.U_I.label,[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
   
+   GA.LU_Ici             = GA.LU_I;
+    GA.LU_Ici.powspctrm   = GA.LU_I.powspctrm-GA.LU_I.powspctrm(:,mirindx,:,:);
+  GA.LC_Ici             = GA.LC_I;
+    GA.LC_Ici.powspctrm   = GA.LC_I.powspctrm-GA.LC_I.powspctrm(:,mirindx,:,:);
+    GA.RU_Ici             = GA.RU_I;
+    GA.RU_Ici.powspctrm   = GA.RU_I.powspctrm-GA.RU_I.powspctrm(:,mirindx,:,:);
+  GA.RC_Ici             = GA.RC_I;
+    GA.RC_Ici.powspctrm   = GA.RC_I.powspctrm-GA.RC_I.powspctrm(:,mirindx,:,:);
+    
+    
     GA.U_Ici             = GA.U_I;
     GA.U_Ici.powspctrm   = GA.U_I.powspctrm-GA.U_I.powspctrm(:,mirindx,:,:);
     GA.U_unIci           = GA.U_unI;
@@ -183,12 +197,18 @@ cfgs.operation  = 'subtract';
 
  GAbsl.diffUIvsunI       = ft_math(cfgs,GAbsl.U_I,GAbsl.U_unI);
  GAbsl.diffCIvsunI       = ft_math(cfgs,GAbsl.C_I,GAbsl.C_unI);
-
+    
  GAbsl.diffUIvsunIci       = ft_math(cfgs,GAbsl.U_Ici,GAbsl.U_unIci);
  GAbsl.diffCIvsunIci       = ft_math(cfgs,GAbsl.C_Ici,GAbsl.C_unIci);
 
  GAbsl.diffUCI       = ft_math(cfgs,GAbsl.U_I,GAbsl.C_I);
  GAbsl.diffUCunI       = ft_math(cfgs,GAbsl.U_unI,GAbsl.C_unI);
+ 
+ GAbsl.diffLUCI       = ft_math(cfgs,GAbsl.LU_I,GAbsl.LC_I);
+ GAbsl.diffLUCIci       = ft_math(cfgs,GAbsl.LU_Ici,GAbsl.LC_Ici);
+ 
+ GAbsl.diffRUCI       = ft_math(cfgs,GAbsl.RU_I,GAbsl.RC_I);
+ GAbsl.diffRUCIci       = ft_math(cfgs,GAbsl.RU_Ici,GAbsl.RC_Ici);
  
  GAbsl.diffUCIci       = ft_math(cfgs,GAbsl.U_Ici,GAbsl.C_Ici);
  GAbsl.diffUCunIci       = ft_math(cfgs,GAbsl.U_unIci,GAbsl.C_unIci);
@@ -213,7 +233,8 @@ cfgp.interactive    = 'yes';
 %   cfgp.maskalpha      = 1;
 % cfgp.parameter      = 'stat';
 
-  data = GAbsl.diffUCIci
+  data = GAbsl.diffRUCI
+  
 %      data =GAbsl.C_Ici;
 % %  data.mask = statUCIci.mask;
 figure,ft_multiplotTFR(cfgp,data)

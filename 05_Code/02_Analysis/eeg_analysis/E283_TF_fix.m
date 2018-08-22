@@ -1,5 +1,5 @@
 % E283
-% Basic TF analysis aligned to stimulus
+% Basic TF analysis aligned to fixation pre target
 % - Simple TF charts
 % - Selection fo peak frequencies at theta, alpha and beta bands
 % - GlM analysis per frequency

@@ -1,5 +1,5 @@
 % E283
-% Basic TF analysis aligned to stimulus
+% Basic TF analysis aligned to saccade pre tartge
 % - Simple TF charts
 % - Selection fo peak frequencies at theta, alpha and beta bands
 % - GlM analysis per frequency
@@ -10,12 +10,12 @@
 clear
 E283_params
 MACpath = '/Users/jossando/trabajo/E283/';
-p.analysisname = 'TFR_SacPreT_dps';
+p.analysisname = 'TFR_SacPreT_hann';
 %%
 s=1
 %p.analysisname = 'saclockTFRdps';
 
-for tk = p.subj % subject number
+for tk = p.subj(s:end) % subject number
 
     % Analysis parameters
     p.times_tflock              = [700 700];
@@ -39,7 +39,7 @@ for tk = p.subj % subject number
         p.cfgTFR.foi                = 4:1:30;
         p.cfgTFR.taper              = 'hanning';%'dpss';
         p.cfgTFR.pad                = 4;
-        p.cfgTFR.t_ftimwin          = .250*ones(1,length(p.cfgTFR.foi));      %    single taper
+        p.cfgTFR.t_ftimwin          = .3*ones(1,length(p.cfgTFR.foi));      %    single taper
     end
     if any(strfind(p.analysisname,'dps'))
         p.cfgTFR.foi                = 2.^(3:.125:6);%(2.^([3:.25:5.25]));% %6:1:40	
@@ -195,9 +195,13 @@ cfgs.operation  = 'subtract';
 
 %  GAbsl.LeftvsRight       = ft_math(cfgs,GAbsl.Left,GAbsl.Right);
 %  GAbsl.LeftvsRightci       = ft_math(cfgs,GAbsl.Leftci,GAbsl.Rightci);
- GAbsl.LvsRpreT0      = ft_math(cfgs,GAbsl.LsacpreT0,GAbsl.RsacpreT0);
+GAbsl.LvsRpreT1      = ft_math(cfgs,GAbsl.LsacpreT1,GAbsl.RsacpreT1); 
+GAbsl.LvsRpreT0      = ft_math(cfgs,GAbsl.LsacpreT0,GAbsl.RsacpreT0);
+GAbsl.LvsRpreT0onTarg      = ft_math(cfgs,GAbsl.LsacpreT0onTarg,GAbsl.RsacpreT0onTarg);
+  GAbsl.LvsRpre      = ft_math(cfgs,GAbsl.Lsacpre,GAbsl.Rsacpre);
 GAbsl.LpreT0vsLpre      = ft_math(cfgs,GAbsl.LsacpreT0,GAbsl.Lsacpre);
 GAbsl.RpreT0vsRpre      = ft_math(cfgs,GAbsl.RsacpreT0,GAbsl.Rsacpre);
+
 %%
 load(cfg_eeg.chanfile)
 cfgp                = [];
@@ -210,14 +214,14 @@ cfgp.interactive    = 'yes';
 % cfgp.baseline       = p.bsl;
 % cfgp.baselinetype   = 'db';
 % cfgp.ylim           = [0 40];
-  cfgp.xlim           = [-.75 .2];
+%   cfgp.xlim           = [-.75 .1];
 %  cfgp.zlim           = [-.5 .5];
 %   cfgp.maskparameter  = 'mask';
 %   cfgp.maskalpha      = 1;
 % cfgp.parameter      = 'stat';
 
-   data = GAbsl.RpreT0vsRpre
- 
+   data = GAbsl.LsacpreT0
+% data = TFRav.LsacpreT1.ICAem
 %      data =GAbsl.C_Ici;
 % %  data.mask = statUCIci.mask;
 figure,ft_multiplotTFR(cfgp,data)
