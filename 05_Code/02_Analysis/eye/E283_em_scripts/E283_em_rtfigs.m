@@ -1,46 +1,78 @@
 % DISTRIBUTION OF RT, for each subject and pooled, plus mean RT and
 % performance per subject and total
 
-figure, hold on
+fh = figure, hold on
+fh.Units = 'centimeters'
+fh.Position = [100 100 4.6 4.6*fh.Position(4)/fh.Position(3)];
 plot(SUMMARY.rTBINS+unique(diff(SUMMARY.rTBINS))/2,[SUMMARY.rTpbin./repmat(sum(SUMMARY.rTpbin,2),1,size(SUMMARY.rTpbin,2))]',...
-    'Color',[.7 .7 .7])
+    'Color',[.7 .7 .7],'LineWidth',.5)
 plot(SUMMARY.rTBINS+unique(diff(SUMMARY.rTBINS))/2,sum(SUMMARY.rTpbin./repmat(sum(SUMMARY.rTpbin,2),1,size(SUMMARY.rTpbin,2)))./Ns,...
-    'Color',[0 0 0],'LineWidth',3)
-plot(SUMMARY.rT,0.225+(rand(1,Ns)-.5)/150,'ok','MarkerSize',6,'LineWidth',1,'MarkerFaceColor',[1 .9 .9])
-line([SUMMARY.meanRT-SUMMARY.meanRTse SUMMARY.meanRT+SUMMARY.meanRTse],[.225 .225],'LineWidth',3,'Color',[0 0 0])
-plot(SUMMARY.meanRT,0.225,'sk','MarkerSize',10,'LineWidth',1,'MarkerFaceColor',[1 0 0])
-text(max(SUMMARY.rT)+range(SUMMARY.rT)*.2,0.225,sprintf('mean : %2.2f + - %2.2f',SUMMARY.meanRT,SUMMARY.meanRTse),'FontSize',10)
-plot(13+(rand(1,Ns)-.5)/5,1-SUMMARY.perf,'ok','MarkerSize',6,'LineWidth',1,'MarkerFaceColor',[1 .9 .9])
-set(gca,'XTick',[SUMMARY.rTBINS(1:4:end) 13],'XTickLabel',{'0','2','4','6','8','10','12', 'misses'},...
-    'FontSize',10)
+    'Color',[0 0 0],'LineWidth',2)
+plot(SUMMARY.rT,0.225+(rand(1,Ns)-.5)/100,'ok','MarkerSize',2,'LineWidth',.5,'MarkerFaceColor',[.9 .9 .9])
+line([SUMMARY.meanRT-SUMMARY.meanRTse SUMMARY.meanRT+SUMMARY.meanRTse],[.225 .225],'LineWidth',.5,'Color',[1 0 0])
+line([SUMMARY.meanRT SUMMARY.meanRT],[.225-.005 .225+.005],'LineWidth',.5,'Color',[1 0 0])
+%plot(SUMMARY.meanRT,0.225,'+k','MarkerSize',6,'LineWidth',1,'MarkerFaceColor',[1 0 0])
+text(max(SUMMARY.rT)+range(SUMMARY.rT)*.3,0.225,sprintf('mean: %2.2f +- %2.2f',SUMMARY.meanRT,SUMMARY.meanRTse),'FontSize',6)
+plot(13+(rand(1,Ns)-.5)/3,1-SUMMARY.perf,'ok','MarkerSize',2,'LineWidth',.5,'MarkerFaceColor',[.9 .9 .9])
+set(gca,'XTick',[SUMMARY.rTBINS(1:4:end) 13],'XTickLabel',{'0','2','4','6','8','10','', 'misses'},...
+    'FontSize',6)
 axis([0 14 0 .25])
-xlabel('Reaction Time (s)','FontSize',12)
-ylabel('Frequency','FontSize',12)
-title(sprintf('N = %d',Ns),'FontSize',12)
-tightfig
- doimage(gcf,fullfile(patheye,'figures'),...
-             'tiff',['performance_' namegr],[],1)
+%axis square
+xlabel('Reaction Time (s)','FontSize',8)
+ylabel('Frequency','FontSize',8)
+% title(sprintf('N = %d',Ns),'FontSize',8)
+%set(gca,'Position',[0.05 0.1 0.95 0.6])
+%tightfig
+figsize     = [4.6 4.6*fh.Position(4)/fh.Position(3)];
+%  doimage(gcf,fullfile(patheye,'figures'),...
+%              'pdf',['performance_' namegr],figsize  ,1)
 
+         %%
 % RT per condition (stimulation side, limb crossing, and informativeness) per subject meand and SE  
-figure
+fh = figure
 hold on
 jitter = (rand(1,Ns)-.5)/10
+xpos = [1:4,6:9];
+cmap2 = cbrewer('qual','Pastel1',2);
 for ll = 1:length(SUMMARY.condLabels)
-    plot(ll+jitter,SUMMARY.rTpCond(:,ll),'ok','MarkerSize',6,'LineWidth',.5,...
-        'MarkerFaceColor',[.9 .9 .9],'MarkerEdgeColor',[.5 .5 .5])
+    if ll<5
+    col = cmap2(2,:)
+    else
+        col = cmap2(1,:)
+    end
+    plot1 = plot(xpos(ll)+jitter,SUMMARY.rTpCond(:,ll),'ok','MarkerSize',4,'LineWidth',.5,...
+        'MarkerFaceColor',col,'MarkerEdgeColor',[.5 .5 .5])
 end 
-errorbar(1:4,SUMMARY.meanRTpCond(1:4),SUMMARY.seRTCond(1:4),'LineWidth',2,'Color',[.1 .1 .1])
-plot(1:4,SUMMARY.meanRTpCond(1:4),'sk','MarkerSize',10,'LineWidth',1,'MarkerFaceColor',[.3 .3 1])
-errorbar(5:8,SUMMARY.meanRTpCond(5:8),SUMMARY.seRTCond(5:8),'LineWidth',2,'Color',[.1 .1 .1])
-plot(5:8,SUMMARY.meanRTpCond(5:8),'sk','MarkerSize',10,'LineWidth',1,'MarkerFaceColor',[1 .3 .3])
+   cmap1 = cbrewer('qual','Set1',2);
+errorbar(1:4,SUMMARY.meanRTpCond(1:4),SUMMARY.seRTCond(1:4),'LineWidth',1,'Color',[0 0 0])
+%plot(1:4,SUMMARY.meanRTpCond(1:4),'sk','MarkerSize',4,'LineWidth',.5,'MarkerFaceColor',[.3 .3 1])
+errorbar(6:9,SUMMARY.meanRTpCond(5:8),SUMMARY.seRTCond(5:8),'LineWidth',1,'Color',[0 0 0])
+%plot(6:9,SUMMARY.meanRTpCond(5:8),'sk','MarkerSize',4,'LineWidth',.5,'MarkerFaceColor',[1 .3 .3])
     
-    axis([.5 8.5 0 6])
-set(gca,'FontSize',10,'XTick',1:length(SUMMARY.condLabels),'XTickLabel',SUMMARY.condLabels)
-ylabel('Reaction Time (s)','FontSize',12)
+    axis([0 10 0 5.2])
+   % axis square
+set(gca,'FontSize',6,'XTick',xpos,'XTickLabel',{'LU','RU','LC','RC','LU','RU','LC','RC'},'YTick',0:2.5:5)
+ylabel('Reaction Time (s)','FontSize',8)
+%xlabel('Informative    Uninformative','FontSize',10)
+%tightfig
+figsize     = [4.6 4.6*fh.Position(4)/fh.Position(3)];
+%  doimage(gcf,fullfile(patheye,'figures'),...
+%              'pdf',['RTpercond_' namegr],figsize,1)
+RTtable =array2table(SUMMARY.rTpCond,'VariableNames',SUMMARY.condLabels)
+Within = table({'L';'R';'L';'R';'L';'R';'L';'R'},{'U';'U';'C';'C';'U';'U';'C';'C'},{'I';'I';'I';'I';'unI';'unI';'unI';'unI'},'VariableNames',{'Side','Crossing','Info'}) 
+RTrm = fitrm(RTtable,'LUI-RCunI~1','WithinDesign',Within)
+[h,p,ci,stats]=ttest(mean(SUMMARY.rTpCond(:,1:4),2),mean(SUMMARY.rTpCond(:,5:8),2))
+RTrm.multcompare('Info')
+RTanova = ranova(RTrm,'WithinModel','Side*Crossing*Info')
 
-tightfig
- doimage(gcf,fullfile(patheye,'figures'),...
-             'tiff',['RTpercond_' namegr],[],1)
+RTrmI = fitrm(RTtable(:,1:4),'LUI-RCI~1','WithinDesign',Within(1:4,:))
+RTanovaI = ranova(RTrmI,'WithinModel','Side*Crossing')
+[h,p,ci,stats]=ttest(mean(SUMMARY.rTpCond(:,3:4),2),mean(SUMMARY.rTpCond(:,1:2),2))
+
+RTrmI.multcompare('Side','By','Crossing')
+
+RTrmunI = fitrm(RTtable(:,5:8),'LUunI-RCunI~1','WithinDesign',Within(5:8,:))
+RTanovaunI = ranova(RTrmunI,'WithinModel','Side*Crossing')
 
 %%
 % figure reaction time per target position with horizontal and vertical

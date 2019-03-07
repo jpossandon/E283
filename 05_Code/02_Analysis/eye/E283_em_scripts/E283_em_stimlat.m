@@ -30,23 +30,35 @@ end
 %%
 subpltmap = [1 2 5 6 3 4 7 8];
 cV        = SUMMARY.condValues;
-for ss = 1:length(allgazes)
-    for gOr = 1:2
-        figure
+  figure
         set(gcf,'Position',[30 53 1251 652])
+        N = zeros(length(allgazes),8,3);
+for ss = 1:length(allgazes)  % loop through subjects
+    for gOr = 1:2            % loop thoough saccade order after stim
+      
         
-        for ev = 1:length(allgazes(ss).gaze)
+        for ev = 1:length(allgazes(ss).gaze)  % loop thorough saccades
             if allgazes(ss).order(ev)==gOr
-                wsP = find(cV==allgazes(ss).cond(ev));
+                wsP = find(cV==allgazes(ss).cond(ev));  % conditiom
                 subplot(2,4,subpltmap(wsP)),hold on
                 gazetoplot      = allgazes(ss).gazesac{ev};
-                if ~isempty(gazetoplot)
-                    gazetoplot      = gazetoplot-repmat(gazetoplot(:,1),1,size(gazetoplot,2));
+                if ~isempty(gazetoplot) & allgazes(ss).latposStim(ev)<600
+                    gazetoplot      = (gazetoplot-repmat(gazetoplot(:,1),1,size(gazetoplot,2)))/posVec.pixxdeg;
                     gazetoplot(2,:) = gazetoplot(2,:)+allgazes(ss).latposStim(ev);
-                    if any(gazetoplot(1,:)<0) & any(gazetoplot(1,:)>0)
-                        plot(gazetoplot(1,:),gazetoplot(2,:),'.','Color',[1 0 0],'MarkerSize',2)
+                    if any(gazetoplot(1,:)<0) & any(gazetoplot(1,:)>0)  % reversal from baseline stast
+                        if gazetoplot(1,end)<0
+                        plot(gazetoplot(1,:),gazetoplot(2,:),'-','Color',[1 0 0],'MarkerSize',1,'LineWidth',.5)
+                        N(ss,wsP,1) = N(ss,wsP,1)+1;
+                        end
+                        if gazetoplot(1,end)>0
+                            plot(gazetoplot(1,:),gazetoplot(2,:),'-','Color',[0 0 1],'MarkerSize',1,'LineWidth',.5)
+                            N(ss,wsP,2) = N(ss,wsP,2)+1;
+                        end
+                        
+                        
                     else
-                        plot(gazetoplot(1,:),gazetoplot(2,:),'.','Color',[0 0 1],'MarkerSize',2)
+                        N(ss,wsP,3) = N(ss,wsP,3)+1; 
+%                         plot(gazetoplot(1,:),gazetoplot(2,:),'-','Color',[.7 .7 .7],'MarkerSize',1,'LineWidth',.1)
                     end
                 end
             end
@@ -54,12 +66,12 @@ for ss = 1:length(allgazes)
     
         for wsP=1:8
             subplot(2,4,subpltmap(wsP))
-            axis([-400 400 -300 800])
+            axis([-10 10 0 600])
             vline(0)
             hline(0)
             title(SUMMARY.condLabels(wsP))
         end
-         doimage(gcf,fullfile(patheye,'figures','sacpersubj'),...
-                   'tiff',sprintf('s%d_postStim%d_%s',subjects(ss),gOr,namegr),[],1)
+%          doimage(gcf,fullfile(patheye,'figures','sacpersubj'),...
+%                    'tiff',sprintf('s%d_postStim%d_%s',subjects(ss),gOr,namegr),[],1)
     end
 end

@@ -67,7 +67,12 @@ for ss = subjects
             SUMMARY.fixperOPnotnextTdur(s,eo-1) = nanmean(auxdat.dur(~nextToTarg & auxdat.orderPreT==eo-1 & auxdat.type==1 & ~auxdat.onTarg)); 
         end
     end
+    
+    % saccade amplitude by order pre target
+    for eo = 1:20
+        SUMMARY.sacperOPTamp(s,eo) = mean(auxdat.amp(auxdat.orderPreT==eo-1 & auxdat.type==2 & auxdat.amp<50));
         
+    end
     s = s+1;
 end
     
@@ -184,26 +189,52 @@ doimage(gcf,fullfile(patheye,'figures'),...
 
 %%
 % figure fixation duration at different event orders pre T
-figure, hold on
-plot(2:size(SUMMARY.fixperOPTdur,2),SUMMARY.fixperOPTdur(:,2:end),...
-    'Color',[.7 .7 .7])
-plot(2:size(SUMMARY.fixperOPTdur,2),mean(SUMMARY.fixperOPTdur(:,2:end)),'-',...
-    'Color',[0 0 0],'LineWidth',3,'MarkerSize',12)
-errorbar(2:size(SUMMARY.fixperOPTdur,2),mean(SUMMARY.fixperOPTdur(:,2:end)),std(SUMMARY.fixperOPTdur(:,2:end),1,1),...
-    'Color',[0 0 0],'LineWidth',2)
-plot(2:size(SUMMARY.fixperOPTdur,2),mean(SUMMARY.fixperOPTdur(:,2:end)),'s',...
-    'Color',[0 0 0],'LineWidth',1,'MarkerSize',10,'MarkerFaceColor',[1 .4 .4])
+fh = figure, hold on
+plot(1:10,[SUMMARY.fixperOPTdur(:,2:10) mean(SUMMARY.fixperOPTdur(:,11:end),2)],...
+    'Color',[.7 .7 .7],'LineWidth',.5)
+plot(1:10,[mean(SUMMARY.fixperOPTdur(:,2:10)) mean(mean(SUMMARY.fixperOPTdur(:,11:end),2))] ,'-',...
+    'Color',[0 0 0],'LineWidth',1,'MarkerSize',12)
+errorbar(1:10,[mean(SUMMARY.fixperOPTdur(:,2:10)) mean(mean(SUMMARY.fixperOPTdur(:,11:end),2))],...
+    [std(SUMMARY.fixperOPTdur(:,2:10)) std(mean(SUMMARY.fixperOPTdur(:,11:end),2))],...
+    'Color',[0 0 0],'LineWidth',.5)
+plot(1:10,[mean(SUMMARY.fixperOPTdur(:,2:10)) mean(mean(SUMMARY.fixperOPTdur(:,11:end),2))],'s',...
+    'Color',[0 0 0],'LineWidth',.5,'MarkerSize',4,'MarkerFaceColor',[1 .4 .4])
 
 
-set(gca,'FontSize',10)
-axis([0 21 100 300])
-xlabel('Event order pre Target','FontSize',12)
-ylabel('Fixation duration (ms)','FontSize',12)
-title(sprintf('N = %d',Ns),'FontSize',12)
-tightfig
-doimage(gcf,fullfile(patheye,'figures'),...
-                'tiff',['fixdurperOPT_' namegr],[],1)
+set(gca,'FontSize',6,'YTick',100:50:300,'XTick',[1:2:9, 10],'XTickLabels',{'1', '3', '5', '7', '9', '>9'})
+axis([0 10.5 100 300])
+xlabel('Event order pre Target','FontSize',8)
+ylabel('Fixation duration (ms)','FontSize',8)
+% title(sprintf('N = %d',Ns),'FontSize',12)
+% tightfig
+figsize     = [4.6 4.6*fh.Position(4)/fh.Position(3)];
+doimage(fh,fullfile(patheye,'figures'),...
+                'pdf',['fixdurperOPT_' namegr],'painters',figsize,1)
            
+%%
+% saccade amplitude at different event orders pre T
+fh = figure, hold on
+plot(1:10,[SUMMARY.sacperOPTamp(:,2:10) mean(SUMMARY.sacperOPTamp(:,11:end),2)],...
+    'Color',[.7 .7 .7],'LineWidth',.5)
+plot(1:10,[mean(SUMMARY.sacperOPTamp(:,2:10)) mean(mean(SUMMARY.sacperOPTamp(:,11:end),2))] ,'-',...
+    'Color',[0 0 0],'LineWidth',1,'MarkerSize',12)
+errorbar(1:10,[mean(SUMMARY.sacperOPTamp(:,2:10)) mean(mean(SUMMARY.sacperOPTamp(:,11:end),2))],...
+    [std(SUMMARY.sacperOPTamp(:,2:10)) std(mean(SUMMARY.sacperOPTamp(:,11:end),2))],...
+    'Color',[0 0 0],'LineWidth',.5)
+plot(1:10,[mean(SUMMARY.sacperOPTamp(:,2:10)) mean(mean(SUMMARY.sacperOPTamp(:,11:end),2))],'s',...
+    'Color',[0 0 0],'LineWidth',.5,'MarkerSize',4,'MarkerFaceColor',[1 .4 .4])
+
+
+set(gca,'FontSize',6,'YTick',0:2:8,'XTick',[1:2:9, 10],'XTickLabels',{'1', '3', '5', '7', '9', '>9'})
+axis([0 10.5 2 8])
+xlabel('Event order pre Target','FontSize',8)
+ylabel('Saccade Amplitude (\circ)','FontSize',8)
+% title(sprintf('N = %d',Ns),'FontSize',12)
+% tightfig
+figsize     = [4.6 4.6*fh.Position(4)/fh.Position(3)];
+doimage(fh,fullfile(patheye,'figures'),...
+                'pdf',['sacampperOPT_' namegr],'painters',figsize,1)
+                       
 %%
 %% 
 % figure fixation duration on target (but not last), next to target and not

@@ -12,7 +12,7 @@ E283_params
 MACpath = '/Users/jossando/trabajo/E283/';
 p.analysisname = 'TFR_SacPreT_hann';
 %%
-s=1
+s=21
 %p.analysisname = 'saclockTFRdps';
 
 for tk = p.subj(s:end) % subject number
@@ -120,6 +120,7 @@ for tk = p.subj(s:end) % subject number
 %     
      for f = 1:length(fieldstoav)
          TFRav.(fieldstoav{f}).(p.analysis_type{1}) = ft_freqdescriptives([], TFR.(fieldstoav{f}).(p.analysis_type{1}));
+         TFRav.(fieldstoav{f}).(p.analysis_type{1}).erppow = squeeze(TFR.(fieldstoav{f}).(p.analysis_type{1}).erppow);
      end
     clear TFR
     mkdir([cfg_eeg.eeganalysisfolder cfg_eeg.analysisname '/tfr/'])
@@ -211,17 +212,17 @@ cfgp.elec           = elec;
 cfgp.interactive    = 'yes';
 % cfgp.channel        = mirindx(1:38);
 % cfgp.trials         = 4
-% cfgp.baseline       = p.bsl;
-% cfgp.baselinetype   = 'db';
+ cfgp.baseline       = p.bsl;
+ cfgp.baselinetype   = 'db';
 % cfgp.ylim           = [0 40];
-%   cfgp.xlim           = [-.75 .1];
+ %  cfgp.xlim           = [-.75 0];
 %  cfgp.zlim           = [-.5 .5];
 %   cfgp.maskparameter  = 'mask';
 %   cfgp.maskalpha      = 1;
 % cfgp.parameter      = 'stat';
 
-   data = GAbsl.LsacpreT0
-% data = TFRav.LsacpreT1.ICAem
+%   data = GAbsl.RpreT0vsRpre
+ data = TFRav.Lsacpre.ICAem
 %      data =GAbsl.C_Ici;
 % %  data.mask = statUCIci.mask;
 figure,ft_multiplotTFR(cfgp,data)

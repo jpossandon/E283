@@ -1,20 +1,30 @@
-bins            = [0:25:1500,inf];
-binspostStim    = [0:25:1000,inf];
-binspostStimT    = [0:50:1000,inf];
+mcoef      = [0 1 0 1 0 1 0 1;... %side stim
+                   0 0 1 1 0 0 1 1;...  %crossing 
+                   1 1 1 1 0 0 0 0]';      % info
+binsize         = 50;
+bins            = [0:binsize:1500,inf];
+binspostStim    = [0:binsize:1000,inf];
+binspostStimT    = [0:binsize:1000,inf];
+RTrightpostStimCond = [];
+ RTleftpostStimCond = [];
+ pRightpCondTime = [];
 s=1;
 nsacs = 5;
 clear binstarts binstPostStim
+ YY = []; XY = []; 
 for ss = subjects
      auxdat    = struct_select(data,{'subject'},{['==' num2str(ss)]},2);
 %      auxdat.latposStim = auxdat.start-auxdat.stimtime;
      starts     = [];   orders       = [];  condition       = [];        
      stimtime   = [];   startPosStim = [];  orderPosStim    = [];
      posPosStim = [];   condPosStim  = [];  posOrdPosStim   = [];
+     dirPosStim = [];
      for tt = unique(auxdat.trial)
          auxstarts      = auxdat.start(find(auxdat.trial==tt  & auxdat.start>0 & auxdat.type==2,nsacs));
          auxstartpost   = auxdat.latposStim(find(auxdat.trial==tt  & auxdat.start>0 & auxdat.type==2,nsacs));
          cond           = auxdat.value(find(auxdat.trial==tt  & auxdat.start>0 & auxdat.type==2,nsacs));
          pos            = auxdat.posendx(find(auxdat.trial==tt  & auxdat.start>0 & auxdat.type==2,nsacs));
+         dirpos         = auxdat.posendx(find(auxdat.trial==tt  & auxdat.start>0 & auxdat.type==2,nsacs))-auxdat.posinix(find(auxdat.trial==tt  & auxdat.start>0 & auxdat.type==2,nsacs));
          stimtime       = [stimtime,auxdat.stimtime(find(auxdat.trial==tt & auxdat.start>0 & auxdat.type==2,nsacs))];
          starts         = [starts,auxstarts];
          auxorder       = 1:length(auxstarts);
@@ -26,6 +36,7 @@ for ss = subjects
          posOrdPosStim  = [posOrdPosStim 1:length(afterSt)];
          orderPosStim   = [orderPosStim auxorder(afterSt)];
          posPosStim     = [posPosStim pos(afterSt)];
+         dirPosStim     = [dirPosStim dirpos(afterSt)];
          condPosStim    = [condPosStim cond(afterSt)];
      end
      % proportion of first saccades after stimulation that are the first,
@@ -50,22 +61,33 @@ for ss = subjects
          end
      end
      % start time after stimulation and p(right after stimulation)
+     
+    cVV = 1;
      for cV = SUMMARY.condValues
          for sacor = 1:3
              auxindx = posOrdPosStim==sacor & condPosStim == cV;
             binstPostStim(s,:,sacor,cV) = histc(startPosStim(auxindx),binspostStim)./sum(auxindx);
             auxindxR = posOrdPosStim==sacor & condPosStim == cV & posPosStim>posVec.stimRes(1)/2;
             auxindxL = posOrdPosStim==sacor & condPosStim == cV & posPosStim<posVec.stimRes(1)/2;
-            RTrightpostStimCond(s,:,sacor,cV) = histc(startPosStim(auxindxR),binspostStimT)./(sum(auxindxR)+sum(auxindxL));
-            RTleftpostStimCond(s,:,sacor,cV) = histc(startPosStim(auxindxL),binspostStimT)./(sum(auxindxR)+sum(auxindxL));
-         
+            %auxindxR = posOrdPosStim==sacor & condPosStim == cV & dirPosStim>0;
+            %auxindxL = posOrdPosStim==sacor & condPosStim == cV & dirPosStim<0;
+            [NR,BINR]  = histc(startPosStim(auxindxR),binspostStimT);
+            [NL,BINL]  = histc(startPosStim(auxindxL),binspostStimT);
+            RTrightpostStimCond(s,:,sacor,cV) = NR./(sum(auxindxR)+sum(auxindxL));
+            RTleftpostStimCond(s,:,sacor,cV) = NL./(sum(auxindxR)+sum(auxindxL));
+       %     if sacor==1
+                 YY = [YY;[BINR';BINL'],[ones(sum(NR),1);zeros(sum(NL),1)]];
+                 XY = [XY;[repmat(mcoef(cVV,:),length(BINR)+length(BINL),1) s*ones(length(BINR)+length(BINL),1)]];   
+        %    end
          end
          auxindx = condPosStim == cV;
          [N,BIN] = histc(startPosStim(auxindx),binspostStimT);
          auxpos  = posPosStim(auxindx);
          pRightpCondTime(s,:,cV) = [accumarray(BIN',auxpos>posVec.stimRes(1)/2)'./N(1:max(BIN)) zeros(1,length(N)-1-max(BIN))];
-       
+       cVV = cVV+1;
      end
+     
+    
      s = s+1;
 end
 
@@ -86,8 +108,8 @@ ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov','#2 Mov','#3 Mov','#4 Mov','#5 Mov'})
 
 clear h
-  doimage(gcf,fullfile(patheye,'figures'),...
-                'tiff',['latToMove_' namegr],[],1)
+%   doimage(gcf,fullfile(patheye,'figures'),...
+%                 'tiff',['latToMove_' namegr],[],1)
 
 %%
 % and per info/noInfo condition
@@ -106,8 +128,8 @@ end
 xlabel('Latency to # movement per condition','FontSize',12)
 ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov Info','#2 Mov Info','#3 Mov Info','#4 Mov Info','#5 Mov Info'})
-  doimage(gcf,fullfile(patheye,'figures'),...
-                'tiff',['latToMovePerCond_' namegr],[],1)
+%   doimage(gcf,fullfile(patheye,'figures'),...
+%                 'tiff',['latToMovePerCond_' namegr],[],1)
 clear h
 %%
 % latency to move after stimulatio
@@ -122,8 +144,8 @@ end
 xlabel('Latency to # movement after stimulus','FontSize',12)
 ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov','#2 Mov','#3 Mov'})
- doimage(gcf,fullfile(patheye,'figures'),...
-                 'tiff',['latToMoveAfterStim_' namegr],[],1)
+%  doimage(gcf,fullfile(patheye,'figures'),...
+%                  'tiff',['latToMoveAfterStim_' namegr],[],1)
 clear h
 
 %%
@@ -143,48 +165,87 @@ end
 xlabel('Latency to # movement after stimulus','FontSize',12)
 ylabel('Relative Frequency','FontSize',12)
 legend(h,{'#1 Mov Info','#2 Mov Info','#3 Mov Info'})
-  doimage(gcf,fullfile(patheye,'figures'),...
-                  'tiff',['latToMoveAfterStimPerCond_' namegr],[],1)
+%   doimage(gcf,fullfile(patheye,'figures'),...
+%                   'tiff',['latToMoveAfterStimPerCond_' namegr],[],1)
 %%
 % latency to move per condition and side of the screen landing
 fh = figure;
+barxpos    = [-120 -90 -60];
 
 fh.Position = [198 354 1400 600];
 px = 1;
-cmap1 = cbrewer('qual','Set1',4);
-cmap2 = cbrewer('qual','Pastel1',4);
+% cmap1 = cbrewer('qual','Set2',4);
+cmap1 = flipud(cbrewer('seq','Blues',9));
+cmap2 = cmap1(2:2:6,:);
+cmap1 = cmap1(1:2:5,:);
+% cmap2 = cbrewer('qual','Pastel2',4);
+% cmap3 = cbrewer('qual','Set1',4);
+plim = .25;
 for cV = SUMMARY.condValues
-    subplot(2,4,px)
-    for sacor = 1:3
+    if cV<9, colname = 'Blues';else
+        colname = 'Reds';
+    end
+    cmap1 = flipud(cbrewer('seq',colname,9));
+    cmap2 = cmap1(2:2:6,:);
+    cmap1 = cmap1(1:2:5,:);
+    subplot(2,4,px), hold on
+    
+    bR = bar(plim.*squeeze(mean(pRightpCond(:,cV,:)))');
+    bL = bar(-plim+plim.*squeeze(mean(pRightpCond(:,cV,:)))');
+   
+        bR.XData = barxpos;
+        bR.FaceColor = cmap1(1,:);
+        bL.XData = barxpos;
+        bL.FaceColor = cmap1(1,:);
+    bR.BarWidth = .9;
+     bL.BarWidth = .9;
+     bR.LineWidth = .1;
+     bL.LineWidth = .1;
+   for sacor = 1:3
         Mval    = nanmean(RTrightpostStimCond(:,(1:end-1),sacor,cV));
         SE      = nanstd(RTrightpostStimCond(:,(1:end-1),sacor,cV))./sqrt(Ns);
-        jbfill(binspostStimT(1:end-1)+25,Mval+SE,Mval-SE,cmap2(sacor,:),cmap2(sacor,:),1,.5);,hold on
-        h   = plot(binspostStimT(1:end-1)+25,Mval,'.-','LineWidth',2,'Color',cmap1(sacor,:));
+        %jbfill(binspostStimT(1:end-1)+25,Mval+SE,Mval-SE,cmap2(sacor,:),cmap2(sacor,:),1,.5);,hold on
+        h   = plot(binspostStimT(1:end-1)+binsize/2,Mval,'.:','LineWidth',.5,'Color',cmap1(sacor,:));
         Mval    = nanmean(RTleftpostStimCond(:,(1:end-1),sacor,cV));
         SE      = nanstd(RTleftpostStimCond(:,(1:end-1),sacor,cV))./sqrt(Ns);
-        jbfill(binspostStimT(1:end-1)+25,-(Mval+SE),-(Mval-SE),cmap2(sacor,:),cmap2(sacor,:),1,.5);,hold on
-        h   = plot(binspostStimT(1:end-1)+25,-Mval,'.-','LineWidth',2,'Color',cmap1(sacor,:));
-        Mval    = nanmean(RTrightpostStimCond(:,(1:end-1),sacor,cV)-RTleftpostStimCond(:,(1:end-1),sacor,cV));
-        SE      = nanstd(RTrightpostStimCond(:,(1:end-1),sacor,cV)-RTleftpostStimCond(:,(1:end-1),sacor,cV))./sqrt(Ns);
-%         jbfill(binspostStimT(1:end-1)+25,(Mval+SE),(Mval-SE),cmap2(sacor,:),cmap2(sacor,:),1,.5);,hold on
-        h   = plot(binspostStimT(1:end-1)+25,Mval,'--','LineWidth',1,'Color',cmap1(sacor,:));
-        
-        hline(0)
-        vline(200:200:800,':k')
+       % jbfill(binspostStimT(1:end-1)+25,-(Mval+SE),-(Mval-SE),cmap2(sacor,:),cmap2(sacor,:),1,.5);,hold on
+        h   = plot(binspostStimT(1:end-1)+binsize/2,-Mval,'.:','LineWidth',.5,'Color',cmap1(sacor,:));
+          
+       % hline(0)
+       % vline(200:200:800,':k')
+        vline([0],'-k')
+        box on
         view([90 90])
-        axis([0 1000 -.25 .25])
-        title(SUMMARY.condLabels{px})
+        axis([-180 1000 -plim plim])
+        
         if ismember(px,[1,5])
             set(gca,'XTick',0:100:1000,'XTickLabel',{'0','','200','','400','','600','','800','','1000'})
         else
            set(gca,'XTick',0:100:1000,'XTickLabel',{})
         end
+        
+   end
+   if ismember(px,[5:8])
+    set(gca,'YTick',-0.25:.125:.25,'YTickLabel',{'0.25','','0','','0.25'})
+    title(SUMMARY.condLabels{px}(1:2))
+    ylabel('Relative Frequency')
+    else
+         set(gca,'YTick',-0.25:.125:.25,'YTickLabel',{})
+    end
+    for sacor = 1:3
+        Mval    = nanmean(RTrightpostStimCond(:,(1:end-1),sacor,cV)-RTleftpostStimCond(:,(1:end-1),sacor,cV));
+        SE      = nanstd(RTrightpostStimCond(:,(1:end-1),sacor,cV)-RTleftpostStimCond(:,(1:end-1),sacor,cV))./sqrt(Ns);
+        jbfill(binspostStimT(1:end-1)+25,(Mval+SE),(Mval-SE),cmap2(sacor,:),cmap2(sacor,:),1,.5,.75);,hold on
+       h   = plot(binspostStimT(1:end-1)+25,Mval,'LineWidth',.5,'Color',cmap1(sacor,:));
+      
+    end
+    if px==1 || px==5
+        xlabel('Reaction Time (ms)','FontSize',10)
     end
    px=px+1; 
 end
-
-doimage(gcf,fullfile(patheye,'figures'),...
-                  'tiff',['latToMoveperSidePerCond_' namegr],[],1)
+figsize     = [4*4.6 4*4.6*fh.Position(4)/fh.Position(3)];
+ doimage(gcf,fullfile(patheye,'figures'),'pdf',['latToMoveperSidePerCond_' namegr],'600','painters',figsize,1)
 % axis([0 1000 0 1])
 % ylabel('p(right)','FontSize',12)
 % xlabel('time (ms)','FontSize',12)
@@ -238,8 +299,8 @@ legend(gca,'boxoff')
 ylabel('p(left/right field)','FontSize',12)
 set(gca,'XTick',xpos,'XTickLabel',labels)
 
-  doimage(gcf,fullfile(patheye,'figures'),...
-               'tiff',['probRight_' namegr],[],1)
+%  doimage(gcf,fullfile(patheye,'figures'),...
+ %              'tiff',['probRight_' namegr],[],1)
 
 %%
 % movement to the right by time after stimulation
@@ -286,3 +347,93 @@ ylabel('p(right)','FontSize',12)
 xlabel('time (ms)','FontSize',12)
 doimage(gcf,fullfile(patheye,'figures'),...
                'tiff',['probRightAfterStimUni_' namegr],[],1)
+           
+           
+           
+           %%
+%%
+% logistic model ALL
+clc
+numbi = 13;
+bfmc = (numbi-1)*2;
+probh = @(x) 1./(1+exp(-x));
+        
+for unin = [0,1]
+     for nb = 1:numbi
+             indx = find(YY(:,1)==nb & XY(:,2)==unin);
+             if length(indx)>10
+                 %auxXY = [XY(indx,1:2),XY(indx,1).*XY(indx,2)];
+                 %auxY = YY(indx,2);
+                 %auxXY(auxXY==0) = -1;
+                 if unin==1
+                    auxY = (YY(indx,2)==0 & XY(indx,1)==1) | (YY(indx,2)==1 & XY(indx,1)==0);
+                 else
+                    auxY = (YY(indx,2)==0 & XY(indx,1)==0) | (YY(indx,2)==1 & XY(indx,1)==1); 
+                 end
+                 sum(auxY)/length(indx);
+                 %auxXY = [XY(indx,3)];
+                 %nb
+                 %auxres = fitglm(auxXY,auxY,'Distribution','Binomial')
+                 auxXY = [XY(indx,[3,4])];
+                 T = table(auxY,auxXY(:,1),auxXY(:,2),'VariableNames',{'p_ext','cross','subject'});
+                 auxres = fitglme(T,'p_ext ~ cross + (1|subject)','Distribution','Binomial')
+             else
+
+             end
+             coeffs     = auxres.Coefficients.Estimate;
+             coeffsSE   = auxres.Coefficients.SE;
+             df         = auxres.Coefficients.DF;
+             critT      = [tinv(.05/2/bfmc,df),tinv(1-.05/2/bfmc,df)];
+             coeffsCI   = [coeffs+coeffsSE.*critT(:,1) coeffs coeffs+coeffsSE.*critT(:,2)]; 
+             p1(nb,:,unin+1)         = probh(coeffsCI(1,:));
+             p2(nb,:,unin+1)         = probh(sum(coeffsCI));
+             OR(nb,:,unin+1)         = exp(coeffsCI(2,:));
+             fprintf('bin %d, p_external uninfo %1.3f\n',nb,1/(1+exp(-([1 0]*auxres.Coefficients.Estimate))))
+             fprintf('bin %d, p_external info %1.3f\n',nb,1/(1+exp(-([1 1]*auxres.Coefficients.Estimate))))
+             fprintf('bin %d, OR external info vs uninfo %1.2f\n\n',nb,exp(auxres.Coefficients.Estimate(2)))
+     end
+     
+end
+%%
+cmap2 = cbrewer('qual','Pastel1',4);
+labs = {'Uncross','Cross'};
+ORfix = 60;
+for unin = [0,1]
+fh = figure; hold on
+ plot(binspostStimT(1:numbi)+binsize/2,OR(:,2,unin+1)/ORfix,'.--','MarkerSize',10,'Color',[0 0 0],'LineWidth',1)
+    
+     jbfill(binspostStimT(1:numbi)+binsize/2,p1(:,1,unin+1)',p1(:,3,unin+1)',cmap2(1,:),cmap2(1,:),1,.5),hold on
+     plot(binspostStimT(1:numbi)+binsize/2,p1(:,2,unin+1),'.-','MarkerSize',10,'Color',cmap1(1,:),'LineWidth',1)
+     sigind = sum(p1(:,:,unin+1)>.5,2)==3 | sum(p1(:,:,unin+1)<.5,2)==3;
+     if any(sigind)
+         plot(binspostStimT(sigind)+binsize/2,p1(sigind,2,unin+1),'*k','MarkerSize',4,'Color',cmap1(1,:),'LineWidth',1)
+     end
+     jbfill(binspostStimT(1:numbi)+binsize/2,p2(:,1,unin+1)',p2(:,3,unin+1)',cmap2(2,:),cmap2(2,:),1,.5),hold on
+     plot(binspostStimT(1:numbi)+binsize/2,p2(:,2,unin+1),'.-','MarkerSize',10,'Color',cmap1(2,:),'LineWidth',1)
+     sigind = sum(p2(:,:,unin+1)>.5,2)==3 | sum(p2(:,:,unin+1)<.5,2)==3;
+     
+     if any(sigind)
+         plot(binspostStimT(sigind)+binsize/2,p2(sigind,2,unin+1),'*k','MarkerSize',4,'Color',cmap1(2,:),'LineWidth',1)
+     end
+     set(gca,'XTick',0:100:600,'XTickLabel',{'0','','200','','400','','600'},'YTick',[0:.25:1],'FontSize',6)
+     xlabel('Time (ms)','FontSize',10)
+     if unin==0
+        ylabel('p(cue side)','FontSize',8)
+     else
+         ylabel('p(cue side & external)','FontSize',8)
+     end
+     box off
+     hline(.5,':k') ,hold on
+     line([600 600],[0 .5],'Color',[0 0 0],'LineWidth',.5)
+     line([595 600],[.25 .25],'Color',[0 0 0],'LineWidth',.5)
+     line([595 600],[.5 .5],'Color',[0 0 0],'LineWidth',.5)
+     hline(1/60,':r')
+     text(610,.25,num2str(ORfix/4),'FontSize',6)
+     text(610,.5,num2str(ORfix/2),'FontSize',6)
+   %  text(690,.19,'OR','Rotation',90,'FontSize',10)
+     axis([0 600 0 1])
+     figsize     = [4.6 4.6*fh.Position(4)/fh.Position(3)];
+     
+ doimage(fh,fullfile(patheye,'figures'),'pdf',[labs{unin+1} '_pext'],'opengl',figsize,1)
+
+end

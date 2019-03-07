@@ -14,7 +14,7 @@ else
 end   
 %%
 % subject configuration and data
- 
+%{ 
 for tk = p.subj
     tk
 %  for tk = p.subj;
@@ -37,7 +37,7 @@ for tk = p.subj
    
     % get relevant epochevents
      load([cfg_eeg.eyeanalysisfolder cfg_eeg.filename 'eye.mat'])            % eyedata               
-    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'&origstart','<1500';'&latposStim','>-1000'},...
+    [trl,events]           = define_event(cfg_eeg,eyedata,1,{'&origstart','>0';'&origstart','<1000';'&latposStim','>-1000'},...
                                 [800 100],{-1,2,'origstart','>0'}); 
     epochevents             = [];
     epochevents.latency     = events.start;                       % fixation start, here the important thing is the ini pos
@@ -92,16 +92,16 @@ for tk = p.subj
     epochevents.amp             = [epochevents.amp,nan(1,length(events.value))];
      
     % getting the data in EEGlab format
-    [EEG,winrej]            = getDataDeconv(cfg_eeg,epochevents,200); 
+    [EEG,winrej]            = getDataDeconv(cfg_eeg,epochevents,200,1); 
     mirindx                 = mirrindex({EEG.chanlocs.labels},[cfg_eeg.analysisfolder '/01_Channels/mirror_chans']); 
              
     if any(strfind(p.analysisname,'CI'))
-        LstimTimes = epochevents.latency(strcmp(epochevents.type,'stim') & epochevents.side == -1);
+        LstimTimes = epochevents.latency(find(strcmp(epochevents.type,'stim') & epochevents.side == -1)-1);
         for tt  = 1:length(LstimTimes)
             EEGst = find(EEG.times>LstimTimes(tt),1);
             mirsamples = EEGst-floor(EEG.srate*.4):EEGst+ceil(EEG.srate*1.6);
             EEG.data(:,mirsamples) = EEG.data(mirindx,mirsamples);
-            ETst  = find(epochevents.latency>LstimTimes(tt)-400 & epochevents.latency<LstimTimes(tt)+900 & ...
+            ETst  = find(epochevents.latency>LstimTimes(tt)-400 & epochevents.latency<LstimTimes(tt)+1000 & ...
                 (strcmp(epochevents.type,'sac') | strcmp(epochevents.type,'fix')));
             if ~isempty(ETst)
                 [epochevents.pxini(ETst) epochevents.pxend(ETst) epochevents.pxdiff(ETst)] = deal(-epochevents.pxini(ETst),-epochevents.pxend(ETst),-epochevents.pxdiff(ETst));
@@ -119,11 +119,7 @@ for tk = p.subj
     if strcmp(model,'IM_STcsi')
         cfgDesign.eventtypes= {'image','stim'};
         cfgDesign.formula   = {'y~1','y~cross*inst*side'};
-    elseif strcmp(model,'IM_STcsi_Sdxyendampang')
-        cfgDesign.eventtypes= {'sac','image','stim'};
-        cfgDesign.formula   = {sprintf('y~pyend+pxend+spl(amp,10)+circspl(angle,10,%3.1f,%3.1f)',nanmin(epochevents.angle),nanmax(epochevents.angle)),...
-                                 'y~1','y~cross*inst*side'};
-    elseif strcmp(model,'IM_STcsi_Sdxydendxy')
+      elseif strcmp(model,'IM_STcsi_Sdxydendxy')
         cfgDesign.eventtypes= {'sac','image','stim'};
         cfgDesign.formula   = {'y~1+spl(pxdiff,10)+spl(pydiff,10)+spl(pxend,10)+spl(pyend,10)',...
                                 'y~1','y~cross*inst*side'};
@@ -131,20 +127,29 @@ for tk = p.subj
         cfgDesign.eventtypes= {'sac','image','stim'};
         cfgDesign.formula   = {'y~1+spl(pxdiff,10)+spl(pydiff,10)',...
                                 'y~1','y~cross*inst*side'};
+    elseif strcmp(model,'IM_STci_Sdxy')
+        cfgDesign.eventtypes= {'sac','image','stim'};
+        cfgDesign.formula   = {'y~1+spl(pxdiff,10)+spl(pydiff,10)',...
+                                'y~1','y~cross*inst'};
+ 
     end
     EEG                 = uf_designmat(EEG,cfgDesign);
     cfgTexp             = [];
-    cfgTexp.timelimits  = [-1,1];tic
+    cfgTexp.timelimits  = [-.5,.8];tic
     EEG                 = uf_timeexpandDesignmat(EEG,cfgTexp);toc
     EEG                 = uf_continuousArtifactExclude(EEG,struct('winrej',winrej));
+   % cfgfit.method       = 'glmnet';
+   % cfgfit.glmnetalpha  = 0;
+    %EEG                 = uf_glmfit(EEG,cfgfit);
+   
     EEG                 = uf_glmfit(EEG);
- 
     unfold              = uf_condense(EEG);
 
     mkdir(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm'))
     save(fullfile(cfg_eeg.eeganalysisfolder,cfg_eeg.analysisname,model,'glm',[cfg_eeg.sujid,'_',model]),'unfold')
     clear unfold
 end 
+%}
 % ufpredict = uf_predictContinuous(unfold,'predictAt',{{'amp',[.1 .5 1 2.5 5 7.5 10]}});
 % ufmarginal = uf_addmarginal(ufpredict)
 % uf_plotParam(ufpredict,'channel',35,'plotParam',{'(Intercept)','amp'},'add_intercept',1,'baseline',[-.2 0])
@@ -161,7 +166,7 @@ end
 stimB       = [];
 stimBspl    = [];
 ufpredict   = [];
-bslcor    = [];
+bslcor    = [-.5 -.25];
 subjparvalues = {};
 for tk = p.subj
      cfg_eeg             = eeg_etParams_E283(cfg_eeg,'sujid',sprintf('s%02dvs',tk));
@@ -174,18 +179,18 @@ for tk = p.subj
         pyeM        = 9;    pye_pred    = [-fliplr((2.^[-1:4]/2^4)*pyeM) 0 (2.^[-1:4]/2^4)*pyeM];
         
         ufpredict               = uf_predictContinuous(unfold,'predictAt',{{'pxdiff',pxd_pred},{'pydiff',pyd_pred},{'pxend',pxe_pred},{'pyend',pye_pred}});
-    elseif  strcmp(model,'IM_STcsi_Sdxy') 
-       % pxdM        = 10;   pxd_pred    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
-       % pydM        = 10;   pyd_pred    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
-         pxdM        = 10;   pxd_pred    = [-pxdM:.5:pxdM];
-         pydM        = 10;   pyd_pred    = [-pydM:.5:pydM];
+    elseif  strcmp(model,'IM_STcsi_Sdxy')  ||  strcmp(model,'IM_STci_Sdxy')      
+%         pxdM        = 10;   pxd_pred    = [-fliplr((2.^[-1:4]/2^4)*pxdM) 0 (2.^[-1:4]/2^4)*pxdM];
+%         pydM        = 10;   pyd_pred    = [-fliplr((2.^[-1:4]/2^4)*pydM) 0 (2.^[-1:4]/2^4)*pydM];
+         pxdM        = 12;   pxd_pred    = [-pxdM:1.5:pxdM];
+         pydM        = 12;   pyd_pred    = [-pydM:1.5:pydM];
         
         ufpredict               = uf_predictContinuous(unfold,'predictAt',{{'pxdiff',pxd_pred},{'pydiff',pyd_pred}});
         subjparvalues{tk,1} = [unfold.unfold.splines{1}.paramValues(~isnan(unfold.unfold.splines{1}.paramValues))];
         subjparvalues{tk,2} = [unfold.unfold.splines{2}.paramValues(~isnan(unfold.unfold.splines{2}.paramValues))];
     end
         % remove splines from coefficients estimates
-     if strcmp(model,'IM_STcsi_Sdxydendxy') ||  strcmp(model,'IM_STcsi_Sdxy')   
+     if any(strfind(model,'spl')) ||  any(strfind(model,'Sdxy'))   
         rmspl                   = strmatch('spline',{unfold.param.type});
         unfold.beta(:,:,rmspl)  = [];
         unfold.param(rmspl)     = [];
@@ -209,22 +214,25 @@ for tk = p.subj
     end
 
 end
-
+%
 % run 2nd level stat and save
+stattype = 'signpermT';
+mc = 'cluster';
 E283_run2nd_save
 
 %%
 %%
 % plot betas
+% bslcor    = [];
 if ~isempty(bslcor)
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy') '_bslcorr']);
 else
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy')]);
 end
 if any(strfind(p.analysisname,'mirr'))
-    plotBetasTopos(cfg_eeg,result,pathfig,[-.12  .6 .015],[],1)
+    plotBetasTopos(cfg_eeg,result,'mean',pathfig,[-.12  .6 .015],[],1)
 else
-    plotBetasTopos(cfg_eeg,result,pathfig,[-.12  .6 .03],[],0)
+    plotBetasTopos(cfg_eeg,result,'mean',pathfig,[-.2  .7 .05],[],0)
 end
 
 %%
@@ -237,92 +245,62 @@ end
   
 cfg_eeg             = eeg_etParams_E283('expfolder','/Users/jossando/trabajo/E283/','analysisname', p.analysisname); % this is just to being able to do analysis at work and with my laptop
 
-%chnstoPlot      = {{'Cz','CPz'},{'Pz','POz'},{'O1','Oz','O2'},...
- %   {'P5','P7','PO7'},{'P6','P8','PO8'},{'C3','CP3'}};
-chnstoPlot      = {{'FCz','Cz','CPz'},{'O1','Oz','O2'},{'P1','Pz','P2','PO3','POz','PO4'}};
-chnstoPlot      = {{'C3','C5'},{'C4','C6'},{'P5','P7','PO7'},{'P6','P8','PO8'}};
-Bnames        = {'stim_side'};% Bnames        = {'fixpreT0_Intercept','fixpre_3_Intercept','fixpre_orderPreT_2','fixpre_orderPreT_3','fixpre_orderPreT_4','fixpre_orderPreT_5'}
-axLim           = [-1 .1 -10 10];
-plotBetasChannels(cfg_eeg,result,chnstoPlot,Bnames,pathfig,axLim,'preTarget')
+chnstoPlot      = {{'FCz','Cz','CPz'}}
+linecolors      = [0 0 0];
+Bnames         = {'stim_cross'}; Blabels         = {''};
+axLim           = [-.2 .8 -1 1];
+plotBetasChannels(cfg_eeg,'boot_se',result,chnstoPlot,Bnames,Blabels,linecolors,pathfig,axLim,'stim_cross')
 
+chnstoPlot      = {{'C3','C5'},{'C4','C6'},{'FCz','Cz','CPz'}};
+% chnstoPlot      = {{'FCz','Cz','CPz'}};
+%Bnames         = {'image_2_Intercept','stim_3_Intercept','sac_Intercept'} 
+%Blabels        = {'image','touch','saccade'} 
+chnstoPlot      = {{'FCz','Cz','CPz'}}
+Bnames         = {'stim_cross','stim_crossXXinst','stim_inst'} 
+Blabels        = {'cross','crossXinst','inst'} 
+axLim           = [-.2 .7 -1.5 3];
+% plotBetasChannels(cfg_eeg,result,chnstoPlot,Bnames,pathfig,axLim,'preTarget')
+lineColors      = cbrewer('qual','Set1',9)
+plotBetasChannels(cfg_eeg,'mean',result,chnstoPlot,Bnames,Blabels,[1 1 1],lineColors,pathfig,axLim,'stimLock_intercepts')
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % PLOT SPLINES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+bslcor    = [-.5 -.15];
 if ~isempty(bslcor)
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy') '_bslcorr'],'splines');
 else
     pathfig = fullfile(cfg_eeg.eeganalysisfolder,p.analysisname ,model,'figures',[datestr(now,'ddmmyy')],'splines');
 end
-mkdir(pathfig)
 
 if any(strfind(p.analysisname,'mirr'))
-   plotinterval = [-.12  .6 .015];
-   half =1;
+    plotSplinesTopos(cfg_eeg,resultSplines,'mean',pathfig,[-.3 .7 .025],[],1,1)
 else
-    plotinterval = [-.12  .6 .03];
-    half = 0;
-end
-setAbsoluteFigureSize
-splnames = cellfun(@(x) x{1},regexp(resultSplines.coeffs,'^([.*_]?.*_)','match'), 'UniformOutput', false)
-
-for splType=unique(splnames)'
-    splb        = strmatch(splType,splnames);
-    betas.dof   = 1;
-    betas.n     = size(resultSplines.beta,4);
-    betas.time  = resultSplines.times;
-    stat.time   = resultSplines.times;
-    %     collim      =[-6 6]; 
-    for splVal = splb'
-        betas.avg   = squeeze(mean(resultSplines.beta(:,splVal,:,:),4));
-        collim      =[-6*std(betas.avg(:)) 6*std(betas.avg(:))]; 
-    
-        for pint = 1:size(plotinterval,1)
-            fh       = topomitlines(cfg_eeg,stat,betas,plotinterval(pint,:),collim,half);
-            figsize  = [17.6 17.6*fh.Position(4)/fh.Position(3)];
-               doimage(gcf,pathfig,'pdf',[resultSplines.coeffs{splVal} '_' strjoin('_',{num2str(plotinterval(pint,1)),num2str(plotinterval(pint,2))})],figsize,1)
-        end
-    end
+    plotSplinesTopos(cfg_eeg,resultSplines,'mean',pathfig,[-.3  .7 .05],[],0,1)
 end
 
-% difference at same vector
-for splType=unique(splnames)'
-    splb        = strmatch(splType,splnames);
-    betas.dof   = 1;
-    betas.n     = size(resultSplines.beta,4);
-    betas.time  = resultSplines.times;
-    stat.time   = resultSplines.times;
-    %     collim      =[-6 6]; 
-    for splVal = 1:floor(length(splb)/2)
-        betas.avg   = squeeze(mean(resultSplines.beta(:,splb(end-splVal+1),:,:)-resultSplines.beta(:,splb(splVal),:,:),4));
-        collim      =[-6*std(betas.avg(:)) 6*std(betas.avg(:))]; 
-    
-        for pint = 1:size(plotinterval,1)
-            fh       = topomitlines(cfg_eeg,stat,betas,plotinterval(pint,:),collim,half);
-            figsize  = [17.6 17.6*fh.Position(4)/fh.Position(3)];
-              doimage(gcf,pathfig,'pdf',[resultSplines.coeffs{splb(end-splVal+1)} '_minus_' resultSplines.coeffs{splb(splVal)} '_' strjoin('_',{num2str(plotinterval(pint,1)),num2str(plotinterval(pint,2))})],figsize,1)
-        end
-    end
-end
 %%
-% test 2d splines
-%     setAbsoluteFigureSize
-% %
-% for t =.11
-% timetoplot = [t  t+.02 .02];
-% 
-%     betas.dof   = 1;
-%     betas.n     = 1;
-%     betas.avg   = ufpredict.beta(:,:,2:122)+ repmat(ufpredict.beta(:,:,1),1,1,121);
-%     betas.time  = ufpredict.times;
-%     indxT       = find(betas.time>=timetoplot(1),1);
-% 
-%     betas.param = ufpredict.param(2:122);
-%     stat.time = betas.time;
-%     collim = [-8 8]
-% %     collim      =[-3*std(reshape(squeeze(betas.avg(:,indxT,:)),1,size(betas.avg,1)*size(betas.avg,3))) 3*std(reshape(squeeze(betas.avg(:,indxT,:)),1,size(betas.avg,1)*size(betas.avg,3)))]; 
-%  fh = topogrid(cfg,stat,betas,timetoplot,collim)  
-%  fh.Name = num2str(t)
-% end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% SELECTED CHANNELS WITH SUBJECT VARIANCE SPLINES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+chnstoPlot      = {{'P5','P7','PO7'},{'P6','P8','PO8'}};
+% Bnames        = {'diff:sac_pxdiff_    -10:sac_pxdiff_     10',...
+%                  'diff:sac_pxdiff_     -5:sac_pxdiff_      5',...
+%                  'diff:sac_pxdiff_   -2.5:sac_pxdiff_    2.5',...
+%                  'diff:sac_pxdiff_  -1.25:sac_pxdiff_   1.25',...
+%                  'diff:sac_pxdiff_ -0.625:sac_pxdiff_  0.625',...
+%                  'diff:sac_pxdiff_-0.3125:sac_pydiff_ 0.3125'};
 
+Bnames = {resultSplines.coeffs{strmatch('sac_pxdiff',resultSplines.coeffs)}};
+Blabels = {[-12:1.5:12]};
+axLim           = [-.3 .7 -4 8];
+lineColors      = cbrewer('qual','Set1',9)
+lineColors      = cbrewer('div','RdYlGn',length(Bnames));
+% plotBetasChannels(cfg_eeg,resultSplines,chnstoPlot,Bnames,pathfig,axLim,'preTarget')
+plotBetasChannels(cfg_eeg,'mean',resultSplines,chnstoPlot,Bnames,Blabels,lineColors,pathfig,axLim,'spline')
+
+%%
+% checking correlaiton between cross coefficient and performance
+
+crossB = squeeze(result.B(:,strcmp(result.coeffs,'stim_cross'),:,:));
